@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+  <div class="card shadow p-4" style="width: 420px;">
+    <h4 class="text-center mb-4">Log In</h4>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <!-- USERNAME -->
+      <div class="mb-3">
+        <label class="form-label">Username</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+          <div class="small mt-1" style="height:18px;">
+            <span class="text-danger">{{ form.username.errors|first }}</span>
+          </div>
+        {% else %}
+          <div id="username-feedback" class="small mt-1"></div>
+        {% endif %}
+      </div>
+
+      <!-- PASSWORD -->
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        {{ form.password }}
+        <div class="small mt-1">
+          {% if form.password.errors %}
+            <span class="text-danger">{{ form.password.errors|first }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- General login error (wrong credentials) -->
+      <div class="small mb-3" style="height:18px;">
+        {% if error %}
+          <span class="text-danger">✗ {{ error }}</span>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="btn btn-dark w-100">Log In</button>
+    </form>
+    <p class="text-center mt-3">No account? <a href="{% url 'signup' %}">Sign up</a></p>
+  </div>
+</div>
+
+<script>
+  const usernameInput = document.getElementById('id_username');
+  let usernameTimer;
+
+  usernameInput.addEventListener('input', () => {
+    const feedback = document.getElementById('username-feedback');
+    const val = usernameInput.value.trim();
+    clearTimeout(usernameTimer);
+
+    if (val.length === 0) {
+      feedback.textContent = '';
+      usernameInput.classList.remove('is-valid', 'is-invalid');
+      return;
+    }
+
+    // Check invalid characters immediately
+    if (!/^[\w.@+-]+$/.test(val)) {
+      feedback.textContent = 'Invalid character.';
+      feedback.style.color = 'red';
+      usernameInput.classList.add('is-invalid');
+      usernameInput.classList.remove('is-valid');
+      return;
+    }
+
+    // Debounced DB check — does this username exist?
+    usernameTimer = setTimeout(() => {
+      fetch(`/check-username/?username=${encodeURIComponent(val)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.exists) {
+            // On login page, existing = good
+            feedback.textContent = '';
+            feedback.style.color = 'green';
+            usernameInput.classList.add('is-valid');
+            usernameInput.classList.remove('is-invalid');
+          } else {
+            // On login page, not existing = bad
+            feedback.textContent = 'User does not exist.';
+            feedback.style.color = 'red';
+            usernameInput.classList.add('is-invalid');
+            usernameInput.classList.remove('is-valid');
+          }
+        });
+    }, 200);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sign Up</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+  <div class="card shadow p-4" style="width: 420px;">
+    <h4 class="text-center mb-4">Create Account</h4>
+
+    <form method="post" id="signupForm">
+      {% csrf_token %}
+
+      <!-- USERNAME -->
+      <div class="mb-3">
+        <label class="form-label">Username</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+          {% for error in form.username.errors %}
+            <div class="text-danger small mt-1">{{ error }}</div>
+          {% endfor %}
+        {% endif %}
+        <div id="username-feedback" class="small mt-1"></div>
+      </div>
+
+      <!-- PASSWORD 1 -->
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        {{ form.password1 }}
+        {% if form.password1.errors %}
+          {% for error in form.password1.errors %}
+            <div class="text-danger small mt-1">{{ error }}</div>
+          {% endfor %}
+        {% endif %}
+        <div id="password1-feedback" class="small mt-1"></div>  <!-- ← was missing -->
+      </div>
+
+      <!-- PASSWORD 2 -->
+      <div class="mb-3">
+        <label class="form-label">Confirm Password</label>
+        {{ form.password2 }}
+        {% if form.password2.errors %}
+          {% for error in form.password2.errors %}
+            <div class="text-danger small mt-1">{{ error }}</div>
+          {% endfor %}
+        {% endif %}
+        <div id="match-feedback" class="small mt-1"></div>
+      </div>
+
+      <button type="submit" class="btn btn-dark w-100">Sign Up</button>
+    </form>
+    <p class="text-center mt-3">Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+  </div>
+</div>
+
+<script>
+  const usernameInput  = document.getElementById('id_username');
+  const password1Input = document.getElementById('id_password1');
+  const password2Input = document.getElementById('id_password2');
+  let usernameTimer;
+  let passwordTimer;
+
+  // --- Live username check
+  usernameInput.addEventListener('input', () => {
+    const feedback = document.getElementById('username-feedback');
+    const val = usernameInput.value.trim();
+    clearTimeout(usernameTimer);
+
+    if (val.length === 0) {
+      feedback.textContent = '';
+      usernameInput.classList.remove('is-valid', 'is-invalid');
+      return;
+    }
+
+    if (!/^[\w.@+-]+$/.test(val)) {
+      feedback.textContent = '✗ Invalid characters. Use letters, numbers, @, ., +, -, _ only.';
+      feedback.style.color = 'red';
+      usernameInput.classList.add('is-invalid');
+      usernameInput.classList.remove('is-valid');
+      return;
+    }
+
+    usernameTimer = setTimeout(() => {
+      fetch(`/check-username/?username=${encodeURIComponent(val)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.exists) {
+            feedback.textContent = 'Username already taken.';
+            feedback.style.color = 'red';
+            usernameInput.classList.add('is-invalid');
+            usernameInput.classList.remove('is-valid');
+          } else {
+            feedback.textContent = 'Username available.';
+            feedback.style.color = 'green';
+            usernameInput.classList.add('is-valid');
+            usernameInput.classList.remove('is-invalid');
+          }
+        });
+    }, 400);
+  });
+
+  // --- Live password validation (Django validators via AJAX)
+  password1Input.addEventListener('input', () => {
+    const feedback = document.getElementById('password1-feedback');
+    const val = password1Input.value;
+    const username = usernameInput.value;
+    clearTimeout(passwordTimer);
+
+    if (val.length === 0) {
+      feedback.innerHTML = '';
+      password1Input.classList.remove('is-valid', 'is-invalid');
+      return;
+    }
+
+    passwordTimer = setTimeout(() => {
+      fetch(`/check-password/?password=${encodeURIComponent(val)}&username=${encodeURIComponent(username)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.errors.length === 0) {
+            feedback.innerHTML = '<span style="color:green">Valid password.</span>';
+            password1Input.classList.add('is-valid');
+            password1Input.classList.remove('is-invalid');
+          } else {
+            feedback.innerHTML = data.errors
+              .map(e => `<div style="color:red">✗ ${e}</div>`)
+              .join('');
+            password1Input.classList.add('is-invalid');
+            password1Input.classList.remove('is-valid');
+          }
+          checkMatch();
+        });
+    }, 400);
+  });
+
+  // --- Live password match check  ← was missing entirely
+  password2Input.addEventListener('input', checkMatch);
+
+  function checkMatch() {
+    const feedback = document.getElementById('match-feedback');
+    const val2 = password2Input.value;
+
+    if (val2.length === 0) {
+      feedback.textContent = '';
+      password2Input.classList.remove('is-valid', 'is-invalid');
+      return;
+    }
+
+    if (password1Input.value === val2) {
+      feedback.textContent = 'Passwords match.';
+      feedback.style.color = 'green';
+      password2Input.classList.add('is-valid');
+      password2Input.classList.remove('is-invalid');
+    } else {
+      feedback.textContent = 'Passwords do not match.';
+      feedback.style.color = 'red';
+      password2Input.classList.add('is-invalid');
+      password2Input.classList.remove('is-valid');
+    }
+  }
+</script>
+</body>
+</html>
