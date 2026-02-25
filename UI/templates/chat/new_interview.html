@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>New Session</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    .section-card { border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 24px; background: #fff; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .field-wrap { margin-bottom: 12px; }
+    .field-row { display: flex; align-items: flex-start; gap: 8px; }
+    .field-row .field-input { flex: 1; }
+    .btn-gen { flex-shrink: 0; }
+    .field-loading { background-color: #f8f9fa !important; color: #aaa; }
+    textarea { resize: vertical; }
+    .is-invalid-dep { border-color: #dc3545 !important; box-shadow: 0 0 0 0.2rem rgba(220,53,69,.15) !important; }
+
+    /* Patient modal table */
+    .patient-table th { cursor: pointer; user-select: none; white-space: nowrap; }
+    .patient-table th:hover { background: #f0f0f0; }
+    .sort-icon { font-size: 0.7rem; margin-left: 4px; color: #aaa; }
+    .sort-icon.active { color: #000; }
+    .modal-xl { max-width: 1100px; }
+
+    /* Profile modal */
+    .profile-label { font-size: 0.72rem; color: #6c757d; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 1px; }
+    .profile-value { font-size: 0.93rem; margin-bottom: 10px; }
+  </style>
+</head>
+<body class="bg-light">
+<div class="container py-5" style="max-width: 860px;">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-start mb-2">
+    <div>
+      <h3 class="mb-0">Create New Session</h3>
+      <p class="text-muted mb-0">Patient Details</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-outline-dark" onclick="openPatientModal()">
+        <i class="bi bi-folder2-open me-1"></i> Load Patient
+      </button>
+      <button type="button" class="btn btn-dark" onclick="autogenerateAll()">
+        <i class="bi bi-stars me-1"></i> Autogenerate All
+      </button>
+    </div>
+  </div>
+
+  <form method="post" id="newSessionForm" class="mt-4">
+    {% csrf_token %}
+
+    <!-- ── SECTION 1: Identity ── -->
+    <div class="section-card">
+      <div class="section-header">
+        <h5 class="mb-0"><i class="bi bi-person-vcard me-2"></i>Identity</h5>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="autogenerateSection('identity')">
+          <i class="bi bi-stars me-1"></i> Autogenerate Section
+        </button>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Name</label>
+        <div class="field-row">
+          <div class="field-input"><input type="text" id="name" name="name" class="form-control" placeholder="Patient name"></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('name', [])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="field-wrap">
+            <label class="form-label small text-muted">Age</label>
+            <div class="field-row">
+              <div class="field-input"><input type="number" id="age" name="age" class="form-control" placeholder="Age" min="1" max="100"></div>
+              <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('age', [])"><i class="bi bi-stars"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="field-wrap">
+            <label class="form-label small text-muted">Gender</label>
+            <div class="field-row">
+              <div class="field-input">
+                <select id="gender" name="gender" class="form-select">
+                  <option value="">Select gender</option>
+                  <option>Male</option>
+                  <option>Female</option>
+                  <option>Non-binary</option>
+                  <option>Genderqueer</option>
+                  <option>Transgender Male</option>
+                  <option>Transgender Female</option>
+                  <option>Prefer not to say</option>
+                </select>
+              </div>
+              <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('gender', [])"><i class="bi bi-stars"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="field-wrap">
+            <label class="form-label small text-muted">Ethnicity</label>
+            <div class="field-row">
+              <div class="field-input">
+                <select id="ethnicity" name="ethnicity" class="form-select">
+                  <option value="">Select ethnicity</option>
+                  <option>White / Caucasian</option>
+                  <option>Black / African American</option>
+                  <option>Hispanic / Latino</option>
+                  <option>East Asian</option>
+                  <option>South Asian</option>
+                  <option>Southeast Asian</option>
+                  <option>Middle Eastern</option>
+                  <option>Indigenous / First Nations</option>
+                  <option>Mixed / Multiracial</option>
+                  <option>Prefer not to say</option>
+                </select>
+              </div>
+              <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('ethnicity', [])"><i class="bi bi-stars"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Education</label>
+        <div class="field-row">
+          <div class="field-input"><input type="text" id="education" name="education" class="form-control" placeholder="Highest education level"></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('education', ['age'])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Occupation</label>
+        <div class="field-row">
+          <div class="field-input"><input type="text" id="occupation" name="occupation" class="form-control" placeholder="Occupation"></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('occupation', ['age', 'education'])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION 2: Clinical Profile ── -->
+    <div class="section-card">
+      <div class="section-header">
+        <h5 class="mb-0"><i class="bi bi-clipboard2-pulse me-2"></i>Clinical Profile</h5>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="autogenerateSection('clinical')">
+          <i class="bi bi-stars me-1"></i> Autogenerate Section
+        </button>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Disorder</label>
+        <div class="field-row">
+          <div class="field-input">
+            <select id="disorder" name="disorder" class="form-select">
+              <option value="">Select disorder</option>
+              <option value="MDD">Major Depressive Disorder (MDD)</option>
+              <option value="GAD">Generalized Anxiety Disorder (GAD)</option>
+              <option value="PPD">Paranoid Personality Disorder (PPD)</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('disorder', [])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Patient Type <span class="text-muted fw-normal">(comma separated)</span></label>
+        <div class="field-row">
+          <div class="field-input"><input type="text" id="type" name="type" class="form-control" placeholder="e.g. anxious, avoidant, withdrawn"></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('type', ['disorder'])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Starting Emotions <span class="text-muted fw-normal">(comma separated)</span></label>
+        <div class="field-row">
+          <div class="field-input"><input type="text" id="base_emotions" name="base_emotions" class="form-control" placeholder="e.g. sadness, guilt, shame"></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('base_emotions', ['disorder', 'type'])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Intake</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="intake" name="intake" class="form-control" rows="2" placeholder="Intake summary"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('intake', ['disorder', 'type', 'name', 'age'])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION 3: CBT Cognitive Model ── -->
+    <div class="section-card">
+      <div class="section-header">
+        <h5 class="mb-0"><i class="bi bi-diagram-3 me-2"></i>CBT Cognitive Model</h5>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="autogenerateSection('cbt')">
+          <i class="bi bi-stars me-1"></i> Autogenerate Section
+        </button>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Helpless Beliefs <span class="text-muted fw-normal">(comma separated)</span></label>
+        <div class="field-row">
+          <div class="field-input"><input type="text" id="helpless_beliefs" name="helpless_beliefs" class="form-control" placeholder="e.g. I am powerless, Nothing I do matters"></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('helpless_beliefs', ['disorder', 'history'])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Unlovable Beliefs <span class="text-muted fw-normal">(comma separated)</span></label>
+        <div class="field-row">
+          <div class="field-input"><input type="text" id="unlovable_beliefs" name="unlovable_beliefs" class="form-control" placeholder="e.g. I am unworthy of love"></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('unlovable_beliefs', ['disorder', 'history'])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Worthless Beliefs <span class="text-muted fw-normal">(comma separated)</span></label>
+        <div class="field-row">
+          <div class="field-input"><input type="text" id="worthless_beliefs" name="worthless_beliefs" class="form-control" placeholder="e.g. I am a failure"></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('worthless_beliefs', ['disorder', 'history'])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Intermediate Belief</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="intermediate_belief" name="intermediate_belief" class="form-control" rows="2" placeholder="Rules, attitudes, assumptions"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('intermediate_belief', ['helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs'])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Trigger</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="trigger" name="trigger" class="form-control" rows="2" placeholder="Situations that activate core beliefs"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('trigger', ['disorder', 'intermediate_belief'])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Automatic Thoughts</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="auto_thoughts" name="auto_thoughts" class="form-control" rows="2" placeholder="Automatic thoughts in response to triggers"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('auto_thoughts', ['trigger', 'intermediate_belief', 'base_emotions'])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Coping Strategies</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="coping_strategies" name="coping_strategies" class="form-control" rows="2" placeholder="How the patient copes"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('coping_strategies', ['auto_thoughts', 'disorder'])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Behavior</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="behavior" name="behavior" class="form-control" rows="2" placeholder="Observable behavioral patterns"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('behavior', ['auto_thoughts', 'base_emotions', 'coping_strategies'])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION 4: Background & History ── -->
+    <div class="section-card">
+      <div class="section-header">
+        <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Background & History</h5>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="autogenerateSection('background')">
+          <i class="bi bi-stars me-1"></i> Autogenerate Section
+        </button>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">History</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="history" name="history" class="form-control" rows="3" placeholder="Psychiatric and personal history"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('history', ['disorder', 'name', 'age', 'occupation'])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Family Tree</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="family_tree" name="family_tree" class="form-control" rows="3" placeholder="Family structure and relationships"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('family_tree', ['name', 'history', 'disorder'])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Timeline</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="timeline" name="timeline" class="form-control" rows="3" placeholder="Key life events in chronological order"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('timeline', ['history', 'family_tree', 'age'])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION 5: Narrative ── -->
+    <div class="section-card">
+      <div class="section-header">
+        <h5 class="mb-0"><i class="bi bi-journal-text me-2"></i>Narrative</h5>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="autogenerateSection('narrative')">
+          <i class="bi bi-stars me-1"></i> Autogenerate Section
+        </button>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Vignette</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="vignette" name="vignette" class="form-control" rows="4" placeholder="Short narrative vignette describing the patient"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('vignette', ['name', 'age', 'disorder', 'history', 'intake'])"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="d-flex justify-content-between mb-5">
+      <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Cancel
+      </a>
+      <button type="submit" class="btn btn-dark px-5">
+        <i class="bi bi-play-fill me-1"></i> Start Session
+      </button>
+    </div>
+  </form>
+</div>
+
+
+<!-- ════════════════ PATIENT LIST MODAL ════════════════ -->
+<div class="modal fade" id="patientModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-people me-2"></i>Select Patient</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Search + filter row -->
+        <div class="d-flex gap-2 mb-3">
+          <input type="text" id="patientSearch" class="form-control" placeholder="Search by name, disorder, occupation, gender...">
+          <div class="form-check form-switch d-flex align-items-center gap-2 ms-2 text-nowrap">
+            <input class="form-check-input" type="checkbox" id="myPatientsToggle" onchange="toggleMyPatients()">
+            <label class="form-check-label" for="myPatientsToggle">My Patients</label>
+          </div>
+        </div>
+
+        <table class="table table-hover patient-table" id="patientTable">
+          <thead class="table-light">
+            <tr>
+              <th onclick="sortTable('name')">Name <i class="bi bi-arrow-down-up sort-icon" id="sort-name"></i></th>
+              <th onclick="sortTable('age')">Age <i class="bi bi-arrow-down-up sort-icon" id="sort-age"></i></th>
+              <th onclick="sortTable('gender')">Gender <i class="bi bi-arrow-down-up sort-icon" id="sort-gender"></i></th>
+              <th onclick="sortTable('disorder')">Disorder <i class="bi bi-arrow-down-up sort-icon" id="sort-disorder"></i></th>
+              <th onclick="sortTable('occupation')">Occupation <i class="bi bi-arrow-down-up sort-icon" id="sort-occupation"></i></th>
+              <th onclick="sortTable('createdBy')">Created By <i class="bi bi-arrow-down-up sort-icon" id="sort-createdBy"></i></th>
+              <th onclick="sortTable('createdAt')">Date <i class="bi bi-arrow-down-up sort-icon" id="sort-createdAt"></i></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="patientTableBody">
+            <tr><td colspan="8" class="text-center text-muted py-4">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════ PATIENT PROFILE MODAL ════════════════ -->
+<div class="modal fade" id="profileModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header d-flex gap-2 flex-wrap">
+        <button class="btn btn-outline-secondary btn-sm" onclick="backToPatientList()">
+          <i class="bi bi-arrow-left me-1"></i> Back
+        </button>
+        <button class="btn btn-outline-dark btn-sm" id="copyPatientBtn">
+          <i class="bi bi-copy me-1"></i> Copy
+        </button>
+        <button class="btn btn-dark btn-sm" id="loadPatientBtn">
+          <i class="bi bi-box-arrow-in-right me-1"></i> Load
+        </button>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="profileModalBody"></div>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // ══════════ DEPENDENCY MAP ══════════
+  const sectionFields = {
+    identity:   [
+      { id: 'name',       deps: [] },
+      { id: 'age',        deps: [] },
+      { id: 'gender',     deps: [] },
+      { id: 'ethnicity',  deps: [] },
+      { id: 'education',  deps: ['age'] },
+      { id: 'occupation', deps: ['age', 'education'] },
+    ],
+    clinical: [
+      { id: 'disorder',      deps: [] },
+      { id: 'type',          deps: ['disorder'] },
+      { id: 'base_emotions', deps: ['disorder', 'type'] },
+      { id: 'intake',        deps: ['disorder', 'type', 'name', 'age'] },
+    ],
+    cbt: [
+      { id: 'helpless_beliefs',    deps: ['disorder', 'history'] },
+      { id: 'unlovable_beliefs',   deps: ['disorder', 'history'] },
+      { id: 'worthless_beliefs',   deps: ['disorder', 'history'] },
+      { id: 'intermediate_belief', deps: ['helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs'] },
+      { id: 'trigger',             deps: ['disorder', 'intermediate_belief'] },
+      { id: 'auto_thoughts',       deps: ['trigger', 'intermediate_belief', 'base_emotions'] },
+      { id: 'coping_strategies',   deps: ['auto_thoughts', 'disorder'] },
+      { id: 'behavior',            deps: ['auto_thoughts', 'base_emotions', 'coping_strategies'] },
+    ],
+    background: [
+      { id: 'history',     deps: ['disorder', 'name', 'age', 'occupation'] },
+      { id: 'family_tree', deps: ['name', 'history', 'disorder'] },
+      { id: 'timeline',    deps: ['history', 'family_tree', 'age'] },
+    ],
+    narrative: [
+      { id: 'vignette', deps: ['name', 'age', 'disorder', 'history', 'intake'] },
+    ],
+  };
+
+  // ══════════ FIELD GENERATION ══════════
+  async function generateField(fieldId, dependencies) {
+    let firstMissing = null;
+    for (const dep of dependencies) {
+      const depEl = document.getElementById(dep);
+      if (!depEl || !depEl.value.trim()) {
+        depEl.classList.add('is-invalid-dep');
+        if (!firstMissing) firstMissing = depEl;
+      } else {
+        depEl.classList.remove('is-invalid-dep');
+      }
+    }
+    if (firstMissing) {
+      firstMissing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      firstMissing.focus();
+      return;
+    }
+
+    const el = document.getElementById(fieldId);
+    if (!el) return;
+    setLoading(el, true);
+
+    const depValues = {};
+    dependencies.forEach(dep => depValues[dep] = document.getElementById(dep).value);
+
+    try {
+      const res = await fetch(`/chat/generate/field/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ field: fieldId, dependencies: depValues })
+      });
+      const data = await res.json();
+      if (el.tagName === 'SELECT') {
+        const opt = [...el.options].find(o => o.value === data.value || o.text === data.value);
+        if (opt) el.value = opt.value;
+      } else {
+        el.value = data.value;
+      }
+      el.classList.remove('is-invalid-dep');
+    } catch (e) {
+      alert('Generation failed. Try again.');
+    } finally {
+      setLoading(el, false);
+    }
+  }
+
+  async function autogenerateSection(section) {
+    for (const f of sectionFields[section]) await generateField(f.id, f.deps);
+  }
+
+  async function autogenerateAll() {
+    for (const section of Object.keys(sectionFields)) await autogenerateSection(section);
+  }
+
+  function setLoading(el, loading) {
+    if (loading) {
+      el.classList.add('field-loading');
+      el.disabled = true;
+      if (el.tagName !== 'SELECT') el.placeholder = 'Generating...';
+    } else {
+      el.classList.remove('field-loading');
+      el.disabled = false;
+    }
+  }
+
+  // ══════════ PATIENT MODAL ══════════
+  let allPatients   = [];
+  let filteredPatients = [];
+  let sortCol       = 'createdAt';
+  let sortDir       = -1;   // -1 = desc, 1 = asc
+  let onlyMine      = false;
+
+  const patientModal = new bootstrap.Modal(document.getElementById('patientModal'));
+  const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
+
+  async function openPatientModal() {
+    patientModal.show();
+    await fetchPatients();
+  }
+
+async function quickCopy(patientId) {
+    const res  = await fetch(`/chat/patients/${patientId}/`);
+    const data = await res.json();
+    fillForm(data);
+    patientModal.hide();
+}
+
+async function quickLoad(patientId) {
+    const res  = await fetch(`/chat/patients/${patientId}/`);
+    const data = await res.json();
+    fillForm(data);
+    patientModal.hide();
+}
+
+  async function fetchPatients() {
+    const url = `/chat/patients/list/?mine=${onlyMine ? 1 : 0}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    allPatients = data.patients;
+    applyFilterAndSort();
+  }
+
+  function toggleMyPatients() {
+    onlyMine = document.getElementById('myPatientsToggle').checked;
+    fetchPatients();
+  }
+
+  document.getElementById('patientSearch').addEventListener('input', function () {
+    applyFilterAndSort();
+  });
+
+  function applyFilterAndSort() {
+    const q = document.getElementById('patientSearch').value.toLowerCase();
+    filteredPatients = allPatients.filter(p =>
+      (p.name       || '').toLowerCase().includes(q) ||
+      (p.disorder   || '').toLowerCase().includes(q) ||
+      (p.occupation || '').toLowerCase().includes(q) ||
+      (p.gender     || '').toLowerCase().includes(q) ||
+      (p.createdBy || '').toLowerCase().includes(q)
+    );
+    sortData();
+    renderPatientTable(filteredPatients);
+  }
+
+  function sortTable(col) {
+    if (sortCol === col) {
+      sortDir *= -1;
+    } else {
+      sortCol = col;
+      sortDir = 1;
+    }
+    // Update sort icons
+    document.querySelectorAll('.sort-icon').forEach(el => el.classList.remove('active'));
+    const icon = document.getElementById(`sort-${col}`);
+    if (icon) {
+      icon.classList.add('active');
+      icon.className = icon.className.replace(/bi-arrow-\S+/, sortDir === 1 ? 'bi-arrow-up' : 'bi-arrow-down');
+    }
+    sortData();
+    renderPatientTable(filteredPatients);
+  }
+
+  function sortData() {
+    filteredPatients.sort((a, b) => {
+      const aVal = (a[sortCol] ?? '').toString().toLowerCase();
+      const bVal = (b[sortCol] ?? '').toString().toLowerCase();
+      // Numeric sort for age
+      if (sortCol === 'age') return sortDir * ((parseInt(a.age) || 0) - (parseInt(b.age) || 0));
+      return sortDir * aVal.localeCompare(bVal);
+    });
+  }
+
+  function renderPatientTable(patients) {
+    const tbody = document.getElementById('patientTableBody');
+    if (!patients.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No patients found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = patients.map(p => `
+      <tr>
+        <td>${p.name       || '—'}</td>
+        <td>${p.age        || '—'}</td>
+        <td>${p.gender     || '—'}</td>
+        <td>${p.disorder   || '—'}</td>
+        <td>${p.occupation || '—'}</td>
+        <td>${p.createdBy || '—'}</td>
+        <td>${p.createdAt || '—'}</td>
+        <td>
+          <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-outline-secondary" title="View Profile" onclick="openProfile(${p.id})">
+              <i class="bi bi-box-arrow-up-right"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-dark" title="Copy to form" onclick="quickCopy(${p.id})">
+              <i class="bi bi-copy"></i>
+            </button>
+            <button class="btn btn-sm btn-dark" title="Load patient" onclick="quickLoad(${p.id})">
+              <i class="bi bi-box-arrow-in-right"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+
+  // ══════════ PROFILE MODAL ══════════
+  async function openProfile(patientId) {
+    const res  = await fetch(`/chat/patients/${patientId}/`);
+    const data = await res.json();
+
+    document.getElementById('profileModalBody').innerHTML = renderProfile(data);
+    document.getElementById('loadPatientBtn').onclick = () => { loadPatient(data); };
+    document.getElementById('copyPatientBtn').onclick = () => { copyPatient(data); };
+
+    patientModal.hide();
+    profileModal.show();
+  }
+
+
+  function renderProfile(p) {
+    const f = (label, val) => {
+      if (!val && val !== 0) return '';
+      const display = Array.isArray(val) ? val.join(', ') : val;
+      return `<div class="profile-label">${label}</div><div class="profile-value">${display}</div>`;
+    };
+    return `
+      <h5 class="mb-3">${p.name || 'Unknown Patient'}</h5>
+      <div class="row">
+        <div class="col-md-6">
+          ${f('Age', p.age)} ${f('Gender', p.gender)} ${f('Ethnicity', p.ethnicity)}
+          ${f('Education', p.education)} ${f('Occupation', p.occupation)}
+          ${f('Disorder', p.disorder)} ${f('Patient Type', p.type)}
+          ${f('Starting Emotions', p.base_emotions)}
+        </div>
+        <div class="col-md-6">
+          ${f('Helpless Beliefs', p.helpless_beliefs)}
+          ${f('Unlovable Beliefs', p.unlovable_beliefs)}
+          ${f('Worthless Beliefs', p.worthless_beliefs)}
+          ${f('Intermediate Belief', p.intermediate_belief)}
+          ${f('Trigger', p.trigger)}
+          ${f('Automatic Thoughts', p.auto_thoughts)}
+          ${f('Coping Strategies', p.coping_strategies)}
+          ${f('Behavior', p.behavior)}
+        </div>
+      </div>
+      <hr>
+      ${f('History', p.history)}
+      ${f('Family Tree', p.family_tree)}
+      ${f('Timeline', p.timeline)}
+      ${f('Intake', p.intake)}
+      ${f('Vignette', p.vignette)}
+      <hr>
+      <small class="text-muted">Created by ${p.createdBy} on ${p.createdAt}</small>
+    `;
+  }
+
+  function backToPatientList() {
+    profileModal.hide();
+    patientModal.show();
+  }
+
+  function loadPatient(p)  { fillForm(p); profileModal.hide(); patientModal.hide(); }
+  function copyPatient(p)  { fillForm(p); profileModal.hide(); patientModal.hide(); }
+
+  function fillForm(p) {
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (!el || val === undefined || val === null) return;
+      if (el.tagName === 'SELECT') {
+        const opt = [...el.options].find(o => o.value === val || o.text === val);
+        if (opt) el.value = opt.value;
+      } else {
+        el.value = Array.isArray(val) ? val.join(', ') : val;
+      }
+    };
+    ['name','age','gender','ethnicity','education','occupation','disorder',
+     'type','base_emotions','intake','helpless_beliefs','unlovable_beliefs',
+     'worthless_beliefs','intermediate_belief','trigger','auto_thoughts',
+     'coping_strategies','behavior','history','family_tree','timeline','vignette'
+    ].forEach(field => set(field, p[field]));
+  }
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
+</script>
+</body>
+</html>
