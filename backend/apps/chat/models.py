@@ -30,9 +30,15 @@ class Patient(models.Model):
     timeline            = models.TextField(blank=True)
     createdBy           = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='patients')
     createdAt           = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"#{self.id} — {self.name}"
 
 class Interviewer(models.Model):
     instructions  = models.TextField(blank=True)
+    
+    def __str__(self):
+        return f"#{self.id} INTERVIEWER"
 
 
 class InterviewState(models.Model):
@@ -48,6 +54,9 @@ class InterviewState(models.Model):
     patient_summary = models.TextField(blank=True)
     patient_feelings = models.TextField(blank=True)
     patient_behavior = models.TextField(blank=True)
+    
+    def __str__(self):
+        return f"#{self.id} STATE for Interview #{self.interview.id}"
 
 class Interview(models.Model):
     # Ownership
@@ -59,12 +68,12 @@ class Interview(models.Model):
 
     # Metadata
     title         = models.CharField(max_length=200, blank=True)
-    createdAt    = models.DateTimeField(auto_now_add=True)
+    createdAt     = models.DateTimeField(auto_now_add=True)
     updated_at    = models.DateTimeField(auto_now=True)
     is_active     = models.BooleanField(default=False)  # True when currently in chat
 
     def __str__(self):
-        return f"Interview #{self.id} — {self.patient.name} by {self.createdBy.username}"
+        return f"Interview #{self.id} createdAT {self.createdAt.strftime('%Y-%m-%d %H:%M:%S')} by {self.createdBy.username if self.createdBy else 'USER DELETED'}"
 
 
 class Message(models.Model):
@@ -74,6 +83,9 @@ class Message(models.Model):
     role       = models.CharField(max_length=10, choices=ROLE_CHOICES)
     content    = models.TextField()
     timestamp  = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"#{self.id} — {self.role} message in Interview #{self.interview.id} createdAT {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
 
     class Meta:
         ordering = ['timestamp']
