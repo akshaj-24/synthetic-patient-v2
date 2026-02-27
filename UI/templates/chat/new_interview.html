@@ -20,7 +20,7 @@
     .patient-table th:hover { background: #f0f0f0; }
     .sort-icon { font-size: 0.7rem; margin-left: 4px; color: #aaa; }
     .sort-icon.active { color: #000; }
-    .modal-xl { max-width: 1100px; }
+    .modal-xl { max-width: 90vw; }
 
     /* Profile modal */
     .profile-label { font-size: 0.72rem; color: #6c757d; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 1px; }
@@ -28,6 +28,10 @@
   </style>
 </head>
 <body class="bg-light">
+
+    {% include 'partials/navbar.html' %}
+
+    
 <div class="container py-5" style="max-width: 860px;">
 
   <!-- Header -->
@@ -44,7 +48,16 @@
         <i class="bi bi-stars me-1"></i> Autogenerate All
       </button>
     </div>
+
+
+
   </div>
+
+  <!-- Hint text -->
+    <p class="text-muted small mb-3">
+  <i class="bi bi-info-circle me-1"></i>
+  Fill in fields below and click <strong>Autogenerate</strong> to pass as instructions.
+</p>
 
   <form method="post" id="newSessionForm" class="mt-4">
     {% csrf_token %}
@@ -58,25 +71,17 @@
         </button>
       </div>
 
-      <div class="field-wrap">
-        <label class="form-label small text-muted">Name</label>
-        <div class="field-row">
-          <div class="field-input"><input type="text" id="name" name="name" class="form-control" placeholder="Patient name"></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('name', [])"><i class="bi bi-stars"></i></button>
-        </div>
-      </div>
-
-      <div class="row g-3">
-        <div class="col-md-4">
+      <div class="row g-2">
+        <div class="col-md-6">
           <div class="field-wrap">
             <label class="form-label small text-muted">Age</label>
             <div class="field-row">
-              <div class="field-input"><input type="number" id="age" name="age" class="form-control" placeholder="Age" min="1" max="100"></div>
-              <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('age', [])"><i class="bi bi-stars"></i></button>
+              <div class="field-input"><input type="number" id="age" name="age" class="form-control" placeholder="18-80" min="18" max="80"></div>
+              <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('age', getDeps('age'))"><i class="bi bi-shuffle"></i></button>
             </div>
           </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
           <div class="field-wrap">
             <label class="form-label small text-muted">Gender</label>
             <div class="field-row">
@@ -86,17 +91,14 @@
                   <option>Male</option>
                   <option>Female</option>
                   <option>Non-binary</option>
-                  <option>Genderqueer</option>
-                  <option>Transgender Male</option>
-                  <option>Transgender Female</option>
-                  <option>Prefer not to say</option>
+                  <option>Transgender</option>
                 </select>
               </div>
-              <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('gender', [])"><i class="bi bi-stars"></i></button>
+              <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('gender', getDeps('gender'))"><i class="bi bi-shuffle"></i></button>
             </div>
           </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
           <div class="field-wrap">
             <label class="form-label small text-muted">Ethnicity</label>
             <div class="field-row">
@@ -115,17 +117,47 @@
                   <option>Prefer not to say</option>
                 </select>
               </div>
-              <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('ethnicity', [])"><i class="bi bi-stars"></i></button>
+              <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('ethnicity', getDeps('ethnicity'))"><i class="bi bi-shuffle"></i></button>
             </div>
           </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="field-wrap">
+            <label class="form-label small text-muted">Marital Status</label>
+            <div class="field-row">
+              <div class="field-input">
+                <select id="marital_status" name="marital_status" class="form-select">
+                  <option value="">Select marital status</option>
+                  <option>Single</option>
+                  <option>Common-Law</option>
+                  <option>Married</option>
+                  <option>Divorced</option>
+                  <option>Widowed</option>
+                  <option>Separated</option>
+                </select>
+              </div>
+              <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('marital_status', getDeps('marital_status'))"><i class="bi bi-shuffle"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Name</label>
+        <div class="field-row">
+          <div class="field-input"><input type="text" id="name" name="name" class="form-control" placeholder="Patient Name"></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('name', getDeps('name'))"><i class="bi bi-stars"></i></button>
         </div>
       </div>
 
       <div class="field-wrap">
         <label class="form-label small text-muted">Education</label>
         <div class="field-row">
-          <div class="field-input"><input type="text" id="education" name="education" class="form-control" placeholder="Highest education level"></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('education', ['age'])"><i class="bi bi-stars"></i></button>
+          <div class="field-input"><input type="text" id="education" name="education" class="form-control" placeholder="Education Level"></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('education', getDeps('education'))"><i class="bi bi-shuffle"></i></button>
         </div>
       </div>
 
@@ -133,7 +165,7 @@
         <label class="form-label small text-muted">Occupation</label>
         <div class="field-row">
           <div class="field-input"><input type="text" id="occupation" name="occupation" class="form-control" placeholder="Occupation"></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('occupation', ['age', 'education'])"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('occupation', getDeps('occupation'))"><i class="bi bi-shuffle"></i></button>
         </div>
       </div>
     </div>
@@ -158,7 +190,7 @@
               <option value="PPD">Paranoid Personality Disorder (PPD)</option>
             </select>
           </div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('disorder', [])"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('disorder', getDeps('disorder'))"><i class="bi bi-shuffle"></i></button>
         </div>
       </div>
 
@@ -166,7 +198,7 @@
         <label class="form-label small text-muted">Patient Type <span class="text-muted fw-normal">(comma separated)</span></label>
         <div class="field-row">
           <div class="field-input"><input type="text" id="type" name="type" class="form-control" placeholder="e.g. anxious, avoidant, withdrawn"></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('type', ['disorder'])"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('type', getDeps('type'))"><i class="bi bi-stars"></i></button>
         </div>
       </div>
 
@@ -174,7 +206,7 @@
         <label class="form-label small text-muted">Starting Emotions <span class="text-muted fw-normal">(comma separated)</span></label>
         <div class="field-row">
           <div class="field-input"><input type="text" id="base_emotions" name="base_emotions" class="form-control" placeholder="e.g. sadness, guilt, shame"></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('base_emotions', ['disorder', 'type'])"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('base_emotions', getDeps('base_emotions'))"><i class="bi bi-stars"></i></button>
         </div>
       </div>
 
@@ -182,7 +214,7 @@
         <label class="form-label small text-muted">Intake</label>
         <div class="field-row">
           <div class="field-input"><textarea id="intake" name="intake" class="form-control" rows="2" placeholder="Intake summary"></textarea></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('intake', ['disorder', 'type', 'name', 'age'])"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('intake', getDeps('intake'))"><i class="bi bi-stars"></i></button>
         </div>
       </div>
     </div>
@@ -190,7 +222,7 @@
     <!-- ── SECTION 3: CBT Cognitive Model ── -->
     <div class="section-card">
       <div class="section-header">
-        <h5 class="mb-0"><i class="bi bi-diagram-3 me-2"></i>CBT Cognitive Model</h5>
+        <h5 class="mb-0"><i class="bi bi-diagram-3 me-2"></i>Cognitive Model</h5>
         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="autogenerateSection('cbt')">
           <i class="bi bi-stars me-1"></i> Autogenerate Section
         </button>
@@ -200,7 +232,7 @@
         <label class="form-label small text-muted">Helpless Beliefs <span class="text-muted fw-normal">(comma separated)</span></label>
         <div class="field-row">
           <div class="field-input"><input type="text" id="helpless_beliefs" name="helpless_beliefs" class="form-control" placeholder="e.g. I am powerless, Nothing I do matters"></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('helpless_beliefs', ['disorder', 'history'])"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('helpless_beliefs', getDeps('helpless_beliefs'))"><i class="bi bi-stars"></i></button>
         </div>
       </div>
 
@@ -208,7 +240,7 @@
         <label class="form-label small text-muted">Unlovable Beliefs <span class="text-muted fw-normal">(comma separated)</span></label>
         <div class="field-row">
           <div class="field-input"><input type="text" id="unlovable_beliefs" name="unlovable_beliefs" class="form-control" placeholder="e.g. I am unworthy of love"></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('unlovable_beliefs', ['disorder', 'history'])"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('unlovable_beliefs', getDeps('unlovable_beliefs'))"><i class="bi bi-stars"></i></button>
         </div>
       </div>
 
@@ -216,7 +248,7 @@
         <label class="form-label small text-muted">Worthless Beliefs <span class="text-muted fw-normal">(comma separated)</span></label>
         <div class="field-row">
           <div class="field-input"><input type="text" id="worthless_beliefs" name="worthless_beliefs" class="form-control" placeholder="e.g. I am a failure"></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('worthless_beliefs', ['disorder', 'history'])"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('worthless_beliefs', getDeps('worthless_beliefs'))"><i class="bi bi-stars"></i></button>
         </div>
       </div>
 
@@ -224,7 +256,7 @@
         <label class="form-label small text-muted">Intermediate Belief</label>
         <div class="field-row">
           <div class="field-input"><textarea id="intermediate_belief" name="intermediate_belief" class="form-control" rows="2" placeholder="Rules, attitudes, assumptions"></textarea></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('intermediate_belief', ['helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs'])"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('intermediate_belief', getDeps('intermediate_belief'))"><i class="bi bi-stars"></i></button>
         </div>
       </div>
 
@@ -232,7 +264,7 @@
         <label class="form-label small text-muted">Trigger</label>
         <div class="field-row">
           <div class="field-input"><textarea id="trigger" name="trigger" class="form-control" rows="2" placeholder="Situations that activate core beliefs"></textarea></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('trigger', ['disorder', 'intermediate_belief'])"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('trigger', getDeps('trigger'))"><i class="bi bi-stars"></i></button>
         </div>
       </div>
 
@@ -240,7 +272,7 @@
         <label class="form-label small text-muted">Automatic Thoughts</label>
         <div class="field-row">
           <div class="field-input"><textarea id="auto_thoughts" name="auto_thoughts" class="form-control" rows="2" placeholder="Automatic thoughts in response to triggers"></textarea></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('auto_thoughts', ['trigger', 'intermediate_belief', 'base_emotions'])"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('auto_thoughts', getDeps('auto_thoughts'))"><i class="bi bi-stars"></i></button>
         </div>
       </div>
 
@@ -248,7 +280,7 @@
         <label class="form-label small text-muted">Coping Strategies</label>
         <div class="field-row">
           <div class="field-input"><textarea id="coping_strategies" name="coping_strategies" class="form-control" rows="2" placeholder="How the patient copes"></textarea></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('coping_strategies', ['auto_thoughts', 'disorder'])"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('coping_strategies', getDeps('coping_strategies'))"><i class="bi bi-stars"></i></button>
         </div>
       </div>
 
@@ -256,7 +288,7 @@
         <label class="form-label small text-muted">Behavior</label>
         <div class="field-row">
           <div class="field-input"><textarea id="behavior" name="behavior" class="form-control" rows="2" placeholder="Observable behavioral patterns"></textarea></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('behavior', ['auto_thoughts', 'base_emotions', 'coping_strategies'])"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('behavior', getDeps('behavior'))"><i class="bi bi-stars"></i></button>
         </div>
       </div>
     </div>
@@ -271,10 +303,58 @@
       </div>
 
       <div class="field-wrap">
-        <label class="form-label small text-muted">History</label>
+        <label class="form-label small text-muted">Childhood History</label>
         <div class="field-row">
-          <div class="field-input"><textarea id="history" name="history" class="form-control" rows="3" placeholder="Psychiatric and personal history"></textarea></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('history', ['disorder', 'name', 'age', 'occupation'])"><i class="bi bi-stars"></i></button>
+          <div class="field-input"><textarea id="childhood_history" name="childhood_history" class="form-control" rows="3" placeholder="Patient childhood events"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('childhood_history', getDeps('childhood_history'))"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Education History</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="education_history" name="education_history" class="form-control" rows="3" placeholder="Patient education history"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('education_history', getDeps('education_history'))"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Occupation History</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="occupation_history" name="occupation_history" class="form-control" rows="3" placeholder="Patient occupation history"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('occupation_history', getDeps('occupation_history'))"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Relationship History</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="relationship_history" name="relationship_history" class="form-control" rows="3" placeholder="Patient relationship history"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('relationship_history', getDeps('relationship_history'))"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Medical History</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="medical_history" name="medical_history" class="form-control" rows="3" placeholder="Patient medical history"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('medical_history', getDeps('medical_history'))"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Personal History</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="personal_history" name="personal_history" class="form-control" rows="3" placeholder="Patient personal history"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('personal_history', getDeps('personal_history'))"><i class="bi bi-stars"></i></button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Session History</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="session_history" name="session_history" class="form-control" rows="3" placeholder="Patient session history: If you want to simulate a follow up session please provide a brief summary of what you discussed previously OR instructions for auto generation. Blank auto-generation will assume no prior sessions."></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('session_history', getDeps('session_history'))"><i class="bi bi-stars"></i></button>
         </div>
       </div>
 
@@ -282,7 +362,7 @@
         <label class="form-label small text-muted">Family Tree</label>
         <div class="field-row">
           <div class="field-input"><textarea id="family_tree" name="family_tree" class="form-control" rows="3" placeholder="Family structure and relationships"></textarea></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('family_tree', ['name', 'history', 'disorder'])"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('family_tree', getDeps('family_tree'))"><i class="bi bi-stars"></i></button>
         </div>
       </div>
 
@@ -290,7 +370,7 @@
         <label class="form-label small text-muted">Timeline</label>
         <div class="field-row">
           <div class="field-input"><textarea id="timeline" name="timeline" class="form-control" rows="3" placeholder="Key life events in chronological order"></textarea></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('timeline', ['history', 'family_tree', 'age'])"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('timeline', getDeps('timeline'))"><i class="bi bi-stars"></i></button>
         </div>
       </div>
     </div>
@@ -307,15 +387,15 @@
       <div class="field-wrap">
         <label class="form-label small text-muted">Vignette</label>
         <div class="field-row">
-          <div class="field-input"><textarea id="vignette" name="vignette" class="form-control" rows="4" placeholder="Short narrative vignette describing the patient"></textarea></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('vignette', ['name', 'age', 'disorder', 'history', 'intake'])"><i class="bi bi-stars"></i></button>
+          <div class="field-input"><textarea id="vignette" name="vignette" class="form-control" rows="4" placeholder="Short narrative vignette describing the patient, may include key events, emotions, and behaviors"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('vignette', getDeps('vignette'))"><i class="bi bi-stars"></i></button>
         </div>
       </div>
     </div>
 
     <!-- Actions -->
     <div class="d-flex justify-content-between mb-5">
-      <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+      <a href="/" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i> Cancel
       </a>
       <button type="submit" class="btn btn-dark px-5">
@@ -352,7 +432,7 @@
               <th onclick="sortTable('age')">Age <i class="bi bi-arrow-down-up sort-icon" id="sort-age"></i></th>
               <th onclick="sortTable('gender')">Gender <i class="bi bi-arrow-down-up sort-icon" id="sort-gender"></i></th>
               <th onclick="sortTable('disorder')">Disorder <i class="bi bi-arrow-down-up sort-icon" id="sort-disorder"></i></th>
-              <th onclick="sortTable('occupation')">Occupation <i class="bi bi-arrow-down-up sort-icon" id="sort-occupation"></i></th>
+              <th onclick="sortTable('profile_summary')">Profile Summary <i class="bi bi-arrow-down-up sort-icon" id="sort-profile_summary"></i></th>
               <th onclick="sortTable('createdBy')">Created By <i class="bi bi-arrow-down-up sort-icon" id="sort-createdBy"></i></th>
               <th onclick="sortTable('createdAt')">Date <i class="bi bi-arrow-down-up sort-icon" id="sort-createdAt"></i></th>
               <th></th>
@@ -370,7 +450,7 @@
 
 <!-- ════════════════ PATIENT PROFILE MODAL ════════════════ -->
 <div class="modal fade" id="profileModal" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header d-flex gap-2 flex-wrap">
         <button class="btn btn-outline-secondary btn-sm" onclick="backToPatientList()">
@@ -395,38 +475,53 @@
   // ══════════ DEPENDENCY MAP ══════════
   const sectionFields = {
     identity:   [
-      { id: 'name',       deps: [] },
+      { id: 'name',       deps: ['gender'] },
       { id: 'age',        deps: [] },
       { id: 'gender',     deps: [] },
       { id: 'ethnicity',  deps: [] },
+      { id: 'marital_status', deps: ['age'] },
       { id: 'education',  deps: ['age'] },
-      { id: 'occupation', deps: ['age', 'education'] },
+      { id: 'occupation', deps: ['education'] },
     ],
     clinical: [
       { id: 'disorder',      deps: [] },
       { id: 'type',          deps: ['disorder'] },
       { id: 'base_emotions', deps: ['disorder', 'type'] },
-      { id: 'intake',        deps: ['disorder', 'type', 'name', 'age'] },
+      { id: 'intake',        deps: ['disorder', 'type', 'base_emotions', 'name', 'age', 'gender', 'occupation'] },
     ],
     cbt: [
-      { id: 'helpless_beliefs',    deps: ['disorder', 'history'] },
-      { id: 'unlovable_beliefs',   deps: ['disorder', 'history'] },
-      { id: 'worthless_beliefs',   deps: ['disorder', 'history'] },
+      { id: 'helpless_beliefs',    deps: ['disorder', 'type', 'base_emotions'] },
+      { id: 'unlovable_beliefs',   deps: ['helpless_beliefs'] },
+      { id: 'worthless_beliefs',   deps: ['unlovable_beliefs'] },
       { id: 'intermediate_belief', deps: ['helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs'] },
       { id: 'trigger',             deps: ['disorder', 'intermediate_belief'] },
       { id: 'auto_thoughts',       deps: ['trigger', 'intermediate_belief', 'base_emotions'] },
-      { id: 'coping_strategies',   deps: ['auto_thoughts', 'disorder'] },
+      { id: 'coping_strategies',   deps: ['auto_thoughts', 'disorder', 'intake'] },
       { id: 'behavior',            deps: ['auto_thoughts', 'base_emotions', 'coping_strategies'] },
     ],
     background: [
-      { id: 'history',     deps: ['disorder', 'name', 'age', 'occupation'] },
-      { id: 'family_tree', deps: ['name', 'history', 'disorder'] },
-      { id: 'timeline',    deps: ['history', 'family_tree', 'age'] },
-    ],
+      { id: 'childhood_history',    deps: ['disorder', 'name', 'age', 'occupation', 'intake'] },
+      { id: 'education_history',    deps: ['disorder', 'name', 'age', 'occupation', 'intake'] },
+      { id: 'occupation_history',   deps: ['disorder', 'name', 'age', 'occupation', 'intake'] },
+      { id: 'relationship_history', deps: ['disorder', 'name', 'age', 'occupation', 'intake'] },
+      { id: 'medical_history',      deps: ['disorder', 'name', 'age', 'occupation', 'intake'] },
+      { id: 'personal_history',     deps: ['disorder', 'name', 'age', 'occupation', 'intake'] },
+      { id: 'family_tree',          deps: ['name', 'childhood_history', 'education_history', 'occupation_history', 'relationship_history', 'medical_history', 'personal_history', 'disorder'] },
+      { id: 'timeline',             deps: ['childhood_history', 'education_history', 'occupation_history', 'relationship_history', 'medical_history', 'personal_history', 'family_tree', 'age'] },
+      { id: 'session_history',      deps: ['disorder', 'intake'] },
+      ],
     narrative: [
-      { id: 'vignette', deps: ['name', 'age', 'disorder', 'history', 'intake'] },
+      { id: 'vignette', deps: ['name', 'age', 'disorder', 'childhood_history', 'education_history', 'occupation_history', 'relationship_history', 'medical_history', 'personal_history', 'intake'] },
     ],
   };
+
+  function getDeps(fieldId) {
+  for (const section of Object.values(sectionFields)) {
+    const entry = section.find(f => f.id === fieldId);
+    if (entry) return entry.deps;
+  }
+  return [];
+}
 
   // ══════════ FIELD GENERATION ══════════
   async function generateField(fieldId, dependencies) {
@@ -544,7 +639,7 @@ async function quickLoad(patientId) {
     filteredPatients = allPatients.filter(p =>
       (p.name       || '').toLowerCase().includes(q) ||
       (p.disorder   || '').toLowerCase().includes(q) ||
-      (p.occupation || '').toLowerCase().includes(q) ||
+      (p.profile_summary    || '').toLowerCase().includes(q) ||
       (p.gender     || '').toLowerCase().includes(q) ||
       (p.createdBy || '').toLowerCase().includes(q)
     );
@@ -592,7 +687,7 @@ async function quickLoad(patientId) {
         <td>${p.age        || '—'}</td>
         <td>${p.gender     || '—'}</td>
         <td>${p.disorder   || '—'}</td>
-        <td>${p.occupation || '—'}</td>
+        <td>${p.profile_summary || '—'}</td>
         <td>${p.createdBy || '—'}</td>
         <td>${p.createdAt || '—'}</td>
         <td>
@@ -629,40 +724,50 @@ async function quickLoad(patientId) {
 
   function renderProfile(p) {
     const f = (label, val) => {
-      if (!val && val !== 0) return '';
-      const display = Array.isArray(val) ? val.join(', ') : val;
-      return `<div class="profile-label">${label}</div><div class="profile-value">${display}</div>`;
+        if (!val && val !== 0) return '';
+        const display = Array.isArray(val) ? val.join(', ') : val;
+        return `<div class="profile-label">${label}</div>
+                <div class="profile-value" style="word-break:break-word;white-space:pre-wrap;">${display}</div>`;
     };
-    return `
-      <h5 class="mb-3">${p.name || 'Unknown Patient'}</h5>
-      <div class="row">
-        <div class="col-md-6">
-          ${f('Age', p.age)} ${f('Gender', p.gender)} ${f('Ethnicity', p.ethnicity)}
-          ${f('Education', p.education)} ${f('Occupation', p.occupation)}
-          ${f('Disorder', p.disorder)} ${f('Patient Type', p.type)}
-          ${f('Starting Emotions', p.base_emotions)}
-        </div>
-        <div class="col-md-6">
-          ${f('Helpless Beliefs', p.helpless_beliefs)}
-          ${f('Unlovable Beliefs', p.unlovable_beliefs)}
-          ${f('Worthless Beliefs', p.worthless_beliefs)}
-          ${f('Intermediate Belief', p.intermediate_belief)}
-          ${f('Trigger', p.trigger)}
-          ${f('Automatic Thoughts', p.auto_thoughts)}
-          ${f('Coping Strategies', p.coping_strategies)}
-          ${f('Behavior', p.behavior)}
-        </div>
-      </div>
-      <hr>
-      ${f('History', p.history)}
-      ${f('Family Tree', p.family_tree)}
-      ${f('Timeline', p.timeline)}
-      ${f('Intake', p.intake)}
-      ${f('Vignette', p.vignette)}
-      <hr>
-      <small class="text-muted">Created by ${p.createdBy} on ${p.createdAt}</small>
-    `;
+      return `
+          <h5 class="mb-3">${p.name || 'Unknown Patient'}</h5>
+          <div class="row">
+              <div class="col-md-6">
+                  ${f('Age', p.age)} ${f('Gender', p.gender)} ${f('Ethnicity', p.ethnicity)} ${f('Marital Status', p.marital_status)}
+                  ${f('Education', p.education)} ${f('Occupation', p.occupation)}
+                  ${f('Disorder', p.disorder)} ${f('Patient Type', p.type)}
+                  ${f('Starting Emotions', p.base_emotions)}
+              </div>
+              <div class="col-md-6">
+                  ${f('Helpless Beliefs', p.helpless_beliefs)}
+                  ${f('Unlovable Beliefs', p.unlovable_beliefs)}
+                  ${f('Worthless Beliefs', p.worthless_beliefs)}
+                  ${f('Intermediate Belief', p.intermediate_belief)}
+                  ${f('Profile Summary', p.profile_summary)}
+                  ${f('Automatic Thoughts', p.auto_thoughts)}
+                  ${f('Coping Strategies', p.coping_strategies)}
+                  ${f('Behavior', p.behavior)}
+              </div>
+          </div>
+          <hr>
+          <h6 class="text-muted small fw-bold text-uppercase">Background & History</h6>
+          ${f('Childhood History', p.childhood_history)}
+          ${f('Education History', p.education_history)}
+          ${f('Occupation History', p.occupation_history)}
+          ${f('Relationship History', p.relationship_history)}
+          ${f('Medical History', p.medical_history)}
+          ${f('Personal History', p.personal_history)}
+          ${f('Session History', p.session_history)}
+          ${f('Family Tree', p.family_tree)}
+          ${f('Timeline', p.timeline)}
+          <hr>
+          ${f('Intake', p.intake)}
+          ${f('Vignette', p.vignette)}
+          <hr>
+          <small class="text-muted">Created by ${p.createdBy} on ${p.createdAt}</small>
+      `;
   }
+
 
   function backToPatientList() {
     profileModal.hide();
@@ -673,22 +778,28 @@ async function quickLoad(patientId) {
   function copyPatient(p)  { fillForm(p); profileModal.hide(); patientModal.hide(); }
 
   function fillForm(p) {
-    const set = (id, val) => {
-      const el = document.getElementById(id);
-      if (!el || val === undefined || val === null) return;
-      if (el.tagName === 'SELECT') {
-        const opt = [...el.options].find(o => o.value === val || o.text === val);
-        if (opt) el.value = opt.value;
-      } else {
-        el.value = Array.isArray(val) ? val.join(', ') : val;
-      }
-    };
-    ['name','age','gender','ethnicity','education','occupation','disorder',
-     'type','base_emotions','intake','helpless_beliefs','unlovable_beliefs',
-     'worthless_beliefs','intermediate_belief','trigger','auto_thoughts',
-     'coping_strategies','behavior','history','family_tree','timeline','vignette'
-    ].forEach(field => set(field, p[field]));
+      const set = (id, val) => {
+          const el = document.getElementById(id);
+          if (!el || val === undefined || val === null) return;
+          if (el.tagName === 'SELECT') {
+              const opt = [...el.options].find(o => o.value === val || o.text === val);
+              if (opt) el.value = opt.value;
+          } else {
+              el.value = Array.isArray(val) ? val.join(', ') : val;
+          }
+      };
+      [
+          'name', 'age', 'gender', 'ethnicity', 'marital_status', 'education', 'occupation',
+          'disorder', 'type', 'base_emotions', 'intake',
+          'helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs',
+          'intermediate_belief', 'trigger', 'auto_thoughts',
+          'coping_strategies', 'behavior',
+          'childhood_history', 'education_history', 'occupation_history',
+          'relationship_history', 'medical_history', 'personal_history', 'session_history',
+          'family_tree', 'timeline', 'vignette'
+      ].forEach(field => set(field, p[field]));
   }
+
 
   function getCookie(name) {
     const value = `; ${document.cookie}`;

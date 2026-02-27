@@ -1,6 +1,372 @@
-<!-- each stub template -->
 <!DOCTYPE html>
-<html><body>
-  <h2>{{ view_name }} — OK</h2>
-  <a href="{% url 'home' %}">Home</a>
-</body></html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sessions</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+{% include 'partials/navbar.html' %}
+
+<div class="container py-4" style="max-width: 90vw;">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3 class="mb-0">Sessions</h3>
+      <p class="text-muted small mb-0">All interview sessions</p>
+    </div>
+    <a href="/chat/new/" class="btn btn-dark">
+      <i class="bi bi-plus-lg me-1"></i> New Session
+    </a>
+  </div>
+
+  <!-- Controls -->
+  <div class="d-flex flex-wrap gap-3 align-items-center mb-3">
+    <input type="text" id="searchInput" class="form-control" style="max-width:320px"
+           placeholder="Search title, patient, disorder, user...">
+    <div class="form-check form-switch mb-0">
+      <input class="form-check-input" type="checkbox" id="mineToggle" onchange="fetchInterviews()">
+      <label class="form-check-label" for="mineToggle">My Sessions</label>
+    </div>
+    <div class="form-check form-switch mb-0">
+      <input class="form-check-input" type="checkbox" id="archivedToggle" onchange="fetchInterviews()">
+      <label class="form-check-label text-muted" for="archivedToggle">Show Archived</label>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-responsive">
+    <table class="table table-hover align-middle w-100">
+      <thead class="table-light">
+        <tr>
+          <th onclick="sortTable('id')"          style="cursor:pointer;white-space:nowrap;user-select:none">ID <i class="bi bi-arrow-down-up" id="sort-id" style="font-size:.7rem;color:#aaa"></i></th>
+          <th onclick="sortTable('title')"        style="cursor:pointer;white-space:nowrap;user-select:none">Title <i class="bi bi-arrow-down-up" id="sort-title" style="font-size:.7rem;color:#aaa"></i></th>
+          <th onclick="sortTable('createdBy')"    style="cursor:pointer;white-space:nowrap;user-select:none">Created By <i class="bi bi-arrow-down-up" id="sort-createdBy" style="font-size:.7rem;color:#aaa"></i></th>
+          <th onclick="sortTable('patient_name')" style="cursor:pointer;white-space:nowrap;user-select:none">Patient <i class="bi bi-arrow-down-up" id="sort-patient_name" style="font-size:.7rem;color:#aaa"></i></th>
+          <th onclick="sortTable('disorder')"     style="cursor:pointer;white-space:nowrap;user-select:none">Disorder <i class="bi bi-arrow-down-up" id="sort-disorder" style="font-size:.7rem;color:#aaa"></i></th>
+          <th onclick="sortTable('turn_count')"   style="cursor:pointer;white-space:nowrap;user-select:none">Turns <i class="bi bi-arrow-down-up" id="sort-turn_count" style="font-size:.7rem;color:#aaa"></i></th>
+          <th onclick="sortTable('createdAt')"    style="cursor:pointer;white-space:nowrap;user-select:none">Created <i class="bi bi-arrow-down-up" id="sort-createdAt" style="font-size:.7rem;color:#aaa"></i></th>
+          <th onclick="sortTable('updated_at')"   style="cursor:pointer;white-space:nowrap;user-select:none">Updated <i class="bi bi-arrow-down-up" id="sort-updated_at" style="font-size:.7rem;color:#aaa"></i></th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="interviewTableBody">
+        <tr><td colspan="9" class="text-center text-muted py-4">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ── Preview Modal ── -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-chat-left-text me-2"></i>Message Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="previewModalBody">Loading...</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── Patient Profile Modal ── -->
+<div class="modal fade" id="patientProfileModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-person-vcard me-2"></i>Patient Profile</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="patientProfileBody">Loading...</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── Archive Confirm Modal ── -->
+<div class="modal fade" id="archiveModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-archive me-2"></i><span id="archiveModalTitle">Archive Session</span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="archiveModalBody">Are you sure you want to archive this session?</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-secondary" id="confirmArchiveBtn">Archive</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── Delete Confirm Modal ── -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger"><i class="bi bi-trash me-2"></i>Delete Session</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to <strong>permanently delete</strong> this session?
+        This will also delete all messages and state. This cannot be undone.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  let allInterviews = [];
+  let filtered      = [];
+  let sortCol       = 'createdAt';
+  let sortDir       = -1;
+  const isSuperuser = {{ request.user.is_superuser|yesno:"true,false" }};
+
+  const previewModal        = new bootstrap.Modal(document.getElementById('previewModal'));
+  const patientProfileModal = new bootstrap.Modal(document.getElementById('patientProfileModal'));
+  const archiveModal        = new bootstrap.Modal(document.getElementById('archiveModal'));
+  const deleteModal         = new bootstrap.Modal(document.getElementById('deleteModal'));
+
+  // ── Fetch ──
+  async function fetchInterviews() {
+    const mine     = document.getElementById('mineToggle').checked ? 1 : 0;
+    const archived = document.getElementById('archivedToggle').checked ? 1 : 0;
+    const res  = await fetch(`/chat/list/api/?mine=${mine}&archived=${archived}`);
+    const data = await res.json();
+    allInterviews = data.interviews;
+    applyFilterAndSort();
+  }
+
+  // ── Filter + Sort ──
+  document.getElementById('searchInput').addEventListener('input', applyFilterAndSort);
+
+  function applyFilterAndSort() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    filtered = allInterviews.filter(i =>
+      (i.title        || '').toLowerCase().includes(q) ||
+      (i.patient_name || '').toLowerCase().includes(q) ||
+      (i.disorder     || '').toLowerCase().includes(q) ||
+      (i.createdBy    || '').toLowerCase().includes(q) ||
+      String(i.id).includes(q)
+    );
+    sortData();
+    renderTable();
+  }
+
+  function sortTable(col) {
+    sortDir = sortCol === col ? sortDir * -1 : 1;
+    sortCol = col;
+    document.querySelectorAll('[id^="sort-"]').forEach(el => {
+      el.className = 'bi bi-arrow-down-up';
+      el.style.color = '#aaa';
+    });
+    const icon = document.getElementById(`sort-${col}`);
+    if (icon) {
+      icon.className = `bi ${sortDir === 1 ? 'bi-arrow-up' : 'bi-arrow-down'}`;
+      icon.style.color = '#000';
+    }
+    sortData();
+    renderTable();
+  }
+
+  function sortData() {
+    filtered.sort((a, b) => {
+      if (sortCol === 'id' || sortCol === 'turn_count')
+        return sortDir * ((a[sortCol] || 0) - (b[sortCol] || 0));
+      return sortDir * (a[sortCol] || '').toString().localeCompare((b[sortCol] || '').toString());
+    });
+  }
+
+  // ── Render ──
+  function renderTable() {
+    const tbody = document.getElementById('interviewTableBody');
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">No sessions found.</td></tr>';
+      return;
+    }
+    const canAct = (i) => i.is_mine || isSuperuser;
+
+    tbody.innerHTML = filtered.map(i => `
+      <tr class="${i.archived ? 'table-secondary' : ''}">
+        <td class="text-muted small">#${i.id}</td>
+        <td>
+          ${i.title}
+          ${i.archived ? '<span class="badge bg-secondary ms-1" style="font-size:.7rem">Archived</span>' : ''}
+        </td>
+        <td class="small">${i.createdBy}</td>
+        <td>
+          ${i.patient_name}
+          ${i.patient_id ? `<button class="btn btn-link btn-sm p-0 ms-1" title="View Patient" onclick="openPatientProfile(${i.patient_id})">
+            <i class="bi bi-person-badge"></i></button>` : ''}
+        </td>
+        <td class="small">${i.disorder}</td>
+        <td class="text-center">${i.turn_count}</td>
+        <td class="small">${i.createdAt}</td>
+        <td class="small">${i.updated_at}</td>
+        <td>
+          <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-outline-secondary" title="Preview" onclick="openPreview(${i.id})">
+              <i class="bi bi-chat-left-text"></i>
+            </button>
+            <a href="/chat/${i.id}/" class="btn btn-sm btn-dark" title="Load">
+              <i class="bi bi-box-arrow-in-right"></i>
+            </a>
+            <button class="btn btn-sm btn-outline-secondary ${canAct(i) ? '' : 'disabled'}"
+                    title="${i.archived ? 'Unarchive' : 'Archive'}"
+                    ${canAct(i) ? `onclick="confirmArchive(${i.id}, ${i.archived})"` : 'disabled'}>
+              <i class="bi ${i.archived ? 'bi-archive-fill' : 'bi-archive'}"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger ${canAct(i) ? '' : 'disabled'}"
+                    title="Delete"
+                    ${canAct(i) ? `onclick="confirmDelete(${i.id})"` : 'disabled'}>
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // ── Preview Modal ──
+  async function openPreview(interviewId) {
+    document.getElementById('previewModalBody').innerHTML = 'Loading...';
+    previewModal.show();
+    const res  = await fetch(`/chat/${interviewId}/preview/`);
+    const data = await res.json();
+    if (!data.messages.length) {
+      document.getElementById('previewModalBody').innerHTML = '<p class="text-muted">No messages yet.</p>';
+      return;
+    }
+    const roleBg = { user: '#e9ecef', patient: '#d1ecf1', system: '#fff3cd' };
+    document.getElementById('previewModalBody').innerHTML = `
+      <p class="text-muted small mb-3">Showing last ${data.messages.length} of ${data.total} messages</p>
+      ${data.messages.map(m => `
+        <div class="mb-2 p-2 rounded small" style="background:${roleBg[m.role] || '#e9ecef'}">
+          <strong class="text-capitalize">${m.role}</strong>
+          <span class="text-muted ms-2">${m.timestamp}</span>
+          <div class="mt-1">${m.content}</div>
+        </div>
+      `).join('')}
+    `;
+  }
+
+  // ── Patient Profile Modal ──
+  async function openPatientProfile(patientId) {
+    document.getElementById('patientProfileBody').innerHTML = 'Loading...';
+    patientProfileModal.show();
+    const res = await fetch(`/chat/patients/${patientId}/`);
+    const p   = await res.json();
+    const f = (label, val) => {
+      if (!val && val !== 0) return '';
+      const display = Array.isArray(val) ? val.join(', ') : val;
+      return `<div class="text-muted small fw-bold text-uppercase mb-0">${label}</div>
+              <div class="mb-2" style="word-break:break-word;white-space:pre-wrap;">${display}</div>`;
+    };
+    document.getElementById('patientProfileBody').innerHTML = `
+      <h5>${p.name || 'Unknown'}</h5>
+      <div class="row">
+        <div class="col-md-6">
+          ${f('Age', p.age)}${f('Gender', p.gender)}${f('Ethnicity', p.ethnicity)}
+          ${f('Education', p.education)}${f('Occupation', p.occupation)}
+          ${f('Disorder', p.disorder)}${f('Type', p.type)}
+          ${f('Emotions', p.base_emotions)}
+        </div>
+        <div class="col-md-6">
+          ${f('Helpless Beliefs', p.helpless_beliefs)}
+          ${f('Unlovable Beliefs', p.unlovable_beliefs)}
+          ${f('Worthless Beliefs', p.worthless_beliefs)}
+          ${f('Intermediate Belief', p.intermediate_belief)}
+          ${f('Trigger', p.trigger)}
+          ${f('Auto Thoughts', p.auto_thoughts)}
+          ${f('Coping Strategies', p.coping_strategies)}
+          ${f('Behavior', p.behavior)}
+        </div>
+      </div>
+      <hr>
+      <h6 class="text-muted small fw-bold text-uppercase">Background & History</h6>
+      ${f('Childhood History', p.childhood_history)}
+      ${f('Education History', p.education_history)}
+      ${f('Occupation History', p.occupation_history)}
+      ${f('Relationship History', p.relationship_history)}
+      ${f('Medical History', p.medical_history)}
+      ${f('Personal History', p.personal_history)}
+      ${f('Family Tree', p.family_tree)}
+      ${f('Timeline', p.timeline)}
+      <hr>
+      ${f('Intake', p.intake)}
+      ${f('Vignette', p.vignette)}
+    `;
+  }
+
+
+  // ── Archive Confirm ──
+  let pendingArchiveId      = null;
+  let pendingArchiveState   = null;
+
+  function confirmArchive(interviewId, isArchived) {
+    pendingArchiveId    = interviewId;
+    pendingArchiveState = isArchived;
+    const action = isArchived ? 'Unarchive' : 'Archive';
+    document.getElementById('archiveModalTitle').textContent = `${action} Session`;
+    document.getElementById('archiveModalBody').textContent  = `Are you sure you want to ${action.toLowerCase()} this session?`;
+    document.getElementById('confirmArchiveBtn').textContent = action;
+    archiveModal.show();
+  }
+
+  document.getElementById('confirmArchiveBtn').addEventListener('click', async () => {
+    if (!pendingArchiveId) return;
+    const res  = await fetch(`/chat/${pendingArchiveId}/archive/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    });
+    const data = await res.json();
+    archiveModal.hide();
+    if (data.archived !== undefined) fetchInterviews();
+  });
+
+  // ── Delete Confirm ──
+  let pendingDeleteId = null;
+
+  function confirmDelete(interviewId) {
+    pendingDeleteId = interviewId;
+    deleteModal.show();
+  }
+
+  document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+    if (!pendingDeleteId) return;
+    const res  = await fetch(`/chat/${pendingDeleteId}/delete/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    });
+    const data = await res.json();
+    deleteModal.hide();
+    if (data.deleted) fetchInterviews();
+  });
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
+
+  // ── Init ──
+  fetchInterviews();
+</script>
+
+</body>
+</html>

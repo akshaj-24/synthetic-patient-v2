@@ -1,0 +1,11 @@
+<nav class="navbar navbar-light bg-white border-bottom px-4 py-2 mb-4">
+  <a class="navbar-brand fw-semibold" href="/">
+    <i class="bi bi-house me-1"></i> Patient Sim v2.0
+  </a>
+  <div class="d-flex align-items-center gap-2 text-muted small">
+    <i class="bi bi-person-circle fs-5"></i>
+    <span>{{ request.user.username }}</span>
+    <span class="text-secondary">·</span>
+    <a href="{% url 'logout' %}" class="text-muted text-decoration-none">Logout</a>
+  </div>
+</nav>
