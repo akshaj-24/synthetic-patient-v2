@@ -98,7 +98,7 @@ let allInterviews = [];
             <button class="btn btn-sm btn-outline-secondary" title="Preview" onclick="openPreview(${i.id})">
               <i class="bi bi-chat-left-text"></i>
             </button>
-            <a href="/chat/${i.id}/" class="btn btn-sm btn-dark" title="Load">
+            <a href="/chat/load/${i.id}/" class="btn btn-sm btn-dark" title="Load">
               <i class="bi bi-box-arrow-in-right"></i>
             </a>
             <button class="btn btn-sm btn-outline-secondary ${canAct(i) ? '' : 'disabled'}"
@@ -162,8 +162,10 @@ let allInterviews = [];
           ${f('Education', p.education)}${f('Occupation', p.occupation)}
           ${f('Disorder', p.disorder)}${f('Type', p.type)}
           ${f('Emotions', p.base_emotions)}
+          ${f('Patient Summary', p.profile_summary)}
         </div>
         <div class="col-md-6">
+          ${f('Part of Patient PSI CM Dataset', p.patient_psi ? 'Yes' : 'No')}
           ${f('Helpless Beliefs', p.helpless_beliefs)}
           ${f('Unlovable Beliefs', p.unlovable_beliefs)}
           ${f('Worthless Beliefs', p.worthless_beliefs)}

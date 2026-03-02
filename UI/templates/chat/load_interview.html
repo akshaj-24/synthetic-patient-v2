@@ -1,6 +1,236 @@
-<!-- each stub template -->
 <!DOCTYPE html>
-<html><body>
-  <h2>{{ view_name }} — OK</h2>
-  <a href="{% url 'home' %}">Home</a>
-</body></html>
+<html>
+<head>
+  <title>Session #{{ interview.id }} — Debug View</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    .section-card { border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 24px; background: #fff; }
+    .field-label { font-size: 0.72rem; color: #6c757d; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
+    .field-value { font-size: 0.93rem; margin-bottom: 12px; word-break: break-word; white-space: pre-wrap; }
+    .field-value.empty { color: #adb5bd; font-style: italic; }
+    .badge-psi { background: #212529; color: #fff; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; vertical-align: middle; }
+
+    /* Loading overlay */
+    #loadingOverlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(255,255,255,0.93);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 20px;
+      transition: opacity 0.4s ease;
+    }
+    #loadingOverlay.hidden { opacity: 0; pointer-events: none; }
+  </style>
+</head>
+<body class="bg-light">
+
+<!-- ══ Loading Overlay — shown only on new session via sessionStorage ══ -->
+<div id="loadingOverlay" style="display:none">
+  <div class="spinner-border" style="width:3rem;height:3rem;" role="status"></div>
+  <div class="text-center">
+    <h5 class="mb-1" id="overlayStatus">Creating Session…</h5>
+    <p class="text-muted mb-0" id="overlayField">Initialising patient and interview state</p>
+  </div>
+</div>
+{% include 'partials/navbar.html' %}
+
+<div class="container py-5" style="max-width: 960px;">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+      <h3 class="mb-0">Session Created ✓</h3>
+    </div>
+    <a href="/chat/{{ interview.id }}/" class="btn btn-dark">
+      <i class="bi bi-play-fill me-1"></i> Start Chat
+    </a>
+  </div>
+
+  <!-- ── INTERVIEW ── -->
+  <div class="section-card">
+    <h5 class="mb-3"><i class="bi bi-journal me-2"></i>Interview</h5>
+    <div class="row">
+      <div class="col-md-2">
+        <div class="field-label">ID</div>
+        <div class="field-value">{{ interview.id }}</div>
+      </div>
+      <div class="col-md-4">
+        <div class="field-label">Title</div>
+        <div class="field-value {% if not interview.title %}empty{% endif %}">{{ interview.title|default:"—" }}</div>
+      </div>
+      <div class="col-md-3">
+        <div class="field-label">Created By</div>
+        <div class="field-value">{{ interview.createdBy.username|default:"—" }}</div>
+      </div>
+      <div class="col-md-3">
+        <div class="field-label">Created At</div>
+        <div class="field-value">{{ interview.createdAt|date:"Y-m-d H:i:s" }}</div>
+      </div>
+      <div class="col-md-2">
+        <div class="field-label">Is Active</div>
+        <div class="field-value">{{ interview.is_active }}</div>
+      </div>
+      <div class="col-md-2">
+        <div class="field-label">Archived</div>
+        <div class="field-value">{{ interview.archived }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PATIENT ── -->
+  <div class="section-card">
+    <h5 class="mb-3">
+      <i class="bi bi-person-vcard me-2"></i>Patient
+      {% if patient.patient_psi %}<span class="badge-psi ms-1">PSI</span>{% endif %}
+    </h5>
+    {% if patient %}
+
+    <h6 class="text-muted small fw-bold text-uppercase mb-3">Identity</h6>
+    <div class="row">
+      <div class="col-md-1"><div class="field-label">ID</div><div class="field-value">{{ patient.id }}</div></div>
+      <div class="col-md-3"><div class="field-label">Name</div><div class="field-value {% if not patient.name %}empty{% endif %}">{{ patient.name|default:"—" }}</div></div>
+      <div class="col-md-1"><div class="field-label">Age</div><div class="field-value {% if not patient.age %}empty{% endif %}">{{ patient.age|default:"—" }}</div></div>
+      <div class="col-md-2"><div class="field-label">Gender</div><div class="field-value {% if not patient.gender %}empty{% endif %}">{{ patient.gender|default:"—" }}</div></div>
+      <div class="col-md-2"><div class="field-label">Ethnicity</div><div class="field-value {% if not patient.ethnicity %}empty{% endif %}">{{ patient.ethnicity|default:"—" }}</div></div>
+      <div class="col-md-3"><div class="field-label">Marital Status</div><div class="field-value {% if not patient.marital_status %}empty{% endif %}">{{ patient.marital_status|default:"—" }}</div></div>
+      <div class="col-md-4"><div class="field-label">Education</div><div class="field-value {% if not patient.education %}empty{% endif %}">{{ patient.education|default:"—" }}</div></div>
+      <div class="col-md-4"><div class="field-label">Occupation</div><div class="field-value {% if not patient.occupation %}empty{% endif %}">{{ patient.occupation|default:"—" }}</div></div>
+      <div class="col-md-2"><div class="field-label">PSI Patient</div><div class="field-value">{{ patient.patient_psi }}</div></div>
+    </div>
+
+    <hr>
+    <h6 class="text-muted small fw-bold text-uppercase mb-3">Clinical Profile</h6>
+    <div class="row">
+      <div class="col-md-4"><div class="field-label">Disorder</div><div class="field-value {% if not patient.disorder %}empty{% endif %}">{{ patient.disorder|default:"—" }}</div></div>
+      <div class="col-md-4"><div class="field-label">Type</div><div class="field-value {% if not patient.type %}empty{% endif %}">{{ patient.type|join:", "|default:"—" }}</div></div>
+      <div class="col-md-4"><div class="field-label">Base Emotions</div><div class="field-value {% if not patient.base_emotions %}empty{% endif %}">{{ patient.base_emotions|join:", "|default:"—" }}</div></div>
+      <div class="col-12"><div class="field-label">Intake</div><div class="field-value {% if not patient.intake %}empty{% endif %}">{{ patient.intake|default:"—" }}</div></div>
+    </div>
+
+    <hr>
+    <h6 class="text-muted small fw-bold text-uppercase mb-3">Cognitive Model</h6>
+    <div class="row">
+      <div class="col-md-4"><div class="field-label">Helpless Beliefs</div><div class="field-value {% if not patient.helpless_beliefs %}empty{% endif %}">{{ patient.helpless_beliefs|join:", "|default:"—" }}</div></div>
+      <div class="col-md-4"><div class="field-label">Unlovable Beliefs</div><div class="field-value {% if not patient.unlovable_beliefs %}empty{% endif %}">{{ patient.unlovable_beliefs|join:", "|default:"—" }}</div></div>
+      <div class="col-md-4"><div class="field-label">Worthless Beliefs</div><div class="field-value {% if not patient.worthless_beliefs %}empty{% endif %}">{{ patient.worthless_beliefs|join:", "|default:"—" }}</div></div>
+      <div class="col-12"><div class="field-label">Intermediate Belief</div><div class="field-value {% if not patient.intermediate_belief %}empty{% endif %}">{{ patient.intermediate_belief|default:"—" }}</div></div>
+      <div class="col-12"><div class="field-label">Trigger</div><div class="field-value {% if not patient.trigger %}empty{% endif %}">{{ patient.trigger|default:"—" }}</div></div>
+      <div class="col-12"><div class="field-label">Automatic Thoughts</div><div class="field-value {% if not patient.auto_thoughts %}empty{% endif %}">{{ patient.auto_thoughts|default:"—" }}</div></div>
+      <div class="col-12"><div class="field-label">Coping Strategies</div><div class="field-value {% if not patient.coping_strategies %}empty{% endif %}">{{ patient.coping_strategies|default:"—" }}</div></div>
+      <div class="col-12"><div class="field-label">Behavior</div><div class="field-value {% if not patient.behavior %}empty{% endif %}">{{ patient.behavior|default:"—" }}</div></div>
+    </div>
+
+    <hr>
+    <h6 class="text-muted small fw-bold text-uppercase mb-3">Background &amp; History</h6>
+    <div class="row">
+      <div class="col-md-6"><div class="field-label">Childhood History</div><div class="field-value {% if not patient.childhood_history %}empty{% endif %}">{{ patient.childhood_history|default:"—" }}</div></div>
+      <div class="col-md-6"><div class="field-label">Education History</div><div class="field-value {% if not patient.education_history %}empty{% endif %}">{{ patient.education_history|default:"—" }}</div></div>
+      <div class="col-md-6"><div class="field-label">Occupation History</div><div class="field-value {% if not patient.occupation_history %}empty{% endif %}">{{ patient.occupation_history|default:"—" }}</div></div>
+      <div class="col-md-6"><div class="field-label">Relationship History</div><div class="field-value {% if not patient.relationship_history %}empty{% endif %}">{{ patient.relationship_history|default:"—" }}</div></div>
+      <div class="col-md-6"><div class="field-label">Medical History</div><div class="field-value {% if not patient.medical_history %}empty{% endif %}">{{ patient.medical_history|default:"—" }}</div></div>
+      <div class="col-md-6"><div class="field-label">Personal History</div><div class="field-value {% if not patient.personal_history %}empty{% endif %}">{{ patient.personal_history|default:"—" }}</div></div>
+      <div class="col-md-6"><div class="field-label">Session History</div><div class="field-value {% if not patient.session_history %}empty{% endif %}">{{ patient.session_history|default:"—" }}</div></div>
+      <div class="col-md-6"><div class="field-label">Family Tree</div><div class="field-value {% if not patient.family_tree %}empty{% endif %}">{{ patient.family_tree|default:"—" }}</div></div>
+      <div class="col-12"><div class="field-label">Timeline</div><div class="field-value {% if not patient.timeline %}empty{% endif %}">{{ patient.timeline|default:"—" }}</div></div>
+    </div>
+
+    <hr>
+    <h6 class="text-muted small fw-bold text-uppercase mb-3">Narrative</h6>
+    <div class="field-label">Vignette</div>
+    <div class="field-value {% if not patient.vignette %}empty{% endif %}">{{ patient.vignette|default:"—" }}</div>
+
+    {% else %}
+    <p class="text-muted">No patient linked.</p>
+    {% endif %}
+  </div>
+
+  <!-- ── INTERVIEW STATE ── -->
+  <div class="section-card">
+    <h5 class="mb-3"><i class="bi bi-sliders me-2"></i>Interview State</h5>
+    {% if state %}
+    <div class="row">
+      <div class="col-md-2"><div class="field-label">State ID</div><div class="field-value">{{ state.id }}</div></div>
+      <div class="col-md-2"><div class="field-label">Turn Count</div><div class="field-value">{{ state.turn_count }}</div></div>
+      <div class="col-md-2"><div class="field-label">Summary Freq</div><div class="field-value">{{ state.summary_freq }}</div></div>
+      <div class="col-md-2"><div class="field-label">Summary Turn</div><div class="field-value">{{ state.summary_turn }}</div></div>
+      <div class="col-12"><div class="field-label">Summary</div><div class="field-value {% if not state.summary %}empty{% endif %}" id="state-summary">{{ state.summary|default:"—" }}</div></div>
+      <div class="col-12"><div class="field-label">Notes</div><div class="field-value {% if not state.notes %}empty{% endif %}" id="state-notes">{{ state.notes|default:"—" }}</div></div>
+      <div class="col-12"><div class="field-label">Patient Summary</div><div class="field-value {% if not state.patient_summary %}empty{% endif %}" id="state-patient_summary">{{ state.patient_summary|default:"—" }}</div></div>
+      <div class="col-12"><div class="field-label">Patient Feelings</div><div class="field-value {% if not state.patient_feelings %}empty{% endif %}" id="state-patient_feelings">{{ state.patient_feelings|default:"—" }}</div></div>
+      <div class="col-12"><div class="field-label">Patient Behavior</div><div class="field-value {% if not state.patient_behavior %}empty{% endif %}" id="state-patient_behavior">{{ state.patient_behavior|default:"—" }}</div></div>
+    </div>
+    {% else %}
+    <p class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>No InterviewState found — was it created?</p>
+    {% endif %}
+  </div>
+
+  <!-- Actions -->
+  <div class="d-flex gap-2 mb-5">
+    <a href="/" class="btn btn-outline-secondary"><i class="bi bi-house me-1"></i> Home</a>
+    <a href="/chat/list/" class="btn btn-outline-secondary"><i class="bi bi-list me-1"></i> All Sessions</a>
+    <a href="/chat/{{ interview.id }}/" class="btn btn-dark ms-auto"><i class="bi bi-play-fill me-1"></i> Start Chat</a>
+  </div>
+
+</div>
+
+<script>
+  window.addEventListener('DOMContentLoaded', function () {
+    const interviewId = {{ interview.id }};
+    const sessionKey  = `new_session_${interviewId}`;
+
+    // Only run populate if flagged via sessionStorage (set by redirect)
+    // ?new=1 in URL sets the flag once, then we clean the URL
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('new') === '1') {
+      sessionStorage.setItem(sessionKey, '1');
+      // Clean URL so reload doesn't re-trigger
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    const isNew = sessionStorage.getItem(sessionKey) === '1';
+    if (!isNew) return;
+    sessionStorage.removeItem(sessionKey); // consume flag
+
+    const overlay    = document.getElementById('loadingOverlay');
+    const statusEl   = document.getElementById('overlayStatus');
+    const fieldEl    = document.getElementById('overlayField');
+    overlay.style.display = 'flex';
+
+    const labels = {
+      summary:          'Generating summary…',
+      notes:            'Generating notes…',
+      patient_summary:  'Generating patient summary…',
+      patient_feelings: 'Generating patient feelings…',
+      patient_behavior: 'Generating patient behavior…',
+    };
+
+    const es = new EventSource(`/chat/load/${interviewId}/populate/`);
+
+    es.onmessage = function (e) {
+      const data = JSON.parse(e.data);
+      if (data.done) {
+        es.close();
+        statusEl.textContent = 'Session Ready';
+        fieldEl.textContent  = '';
+        overlay.classList.add('hidden');
+        setTimeout(() => overlay.remove(), 450);
+        return;
+      }
+      const el = document.getElementById(`state-${data.field}`);
+      if (el) {
+        el.textContent = data.value;
+        el.classList.remove('empty');
+      }
+      fieldEl.textContent = labels[data.field] || `Generating ${data.field}…`;
+    };
+
+    es.onerror = function () {
+      es.close();
+      overlay.classList.add('hidden');
+      setTimeout(() => overlay.remove(), 450);
+    };
+  });
+</script>
+</body>
+</html>

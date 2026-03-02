@@ -41,6 +41,7 @@ class Patient(models.Model):
     createdBy            = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='patients')
     createdAt            = models.DateTimeField(auto_now_add=True)
     profile_summary      = models.TextField(blank=True)
+    patient_psi          = models.BooleanField(default=False)  # True if patient is from the Patient PSI CM dataset
 
     
     def __str__(self):
@@ -76,7 +77,7 @@ class Interview(models.Model):
     createdBy    = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='interviews')
 
     # Linked classes
-    patient       = models.OneToOneField(Patient,       on_delete=models.SET_NULL, null=True)
+    patient       = models.ForeignKey(Patient, on_delete=models.CASCADE, null=True, related_name='interviews')
 
     # Metadata
     title         = models.CharField(max_length=200, blank=True)

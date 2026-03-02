@@ -11,23 +11,113 @@ from . import autogenerate
 @login_required(login_url='login')
 def new_interview(request):
     if request.method == 'POST':
-        patient     = Patient.objects.create()
-        interviewer = Interviewer.objects.create()
-        interview   = Interview.objects.create(
-            createdBy  = request.user,
-            patient     = patient,
-            interviewer = interviewer,
-            title       = f"Interview #{Interview.objects.count() + 1}",
+        d = request.POST
+
+        def to_list(val):
+            """Convert comma-separated string to list, stripping whitespace"""
+            return [x.strip() for x in val.split(',') if x.strip()] if val else []
+
+        patient = Patient.objects.create(
+            createdBy            = request.user,
+            name                 = d.get('name', ''),
+            age                  = int(d['age']) if d.get('age') else None,
+            gender               = d.get('gender', ''),
+            ethnicity            = d.get('ethnicity', ''),
+            marital_status       = d.get('marital_status', ''),
+            education            = d.get('education', ''),
+            occupation           = d.get('occupation', ''),
+            disorder             = d.get('disorder', ''),
+            type                 = to_list(d.get('type', '')),
+            base_emotions        = to_list(d.get('base_emotions', '')),
+            helpless_beliefs     = to_list(d.get('helpless_beliefs', '')),
+            unlovable_beliefs    = to_list(d.get('unlovable_beliefs', '')),
+            worthless_beliefs    = to_list(d.get('worthless_beliefs', '')),
+            intermediate_belief  = d.get('intermediate_belief', ''),
+            trigger              = d.get('trigger', ''),
+            auto_thoughts        = d.get('auto_thoughts', ''),
+            coping_strategies    = d.get('coping_strategies', ''),
+            behavior             = d.get('behavior', ''),
+            intake               = d.get('intake', ''),
+            vignette             = d.get('vignette', ''),
+            childhood_history    = d.get('childhood_history', ''),
+            education_history    = d.get('education_history', ''),
+            occupation_history   = d.get('occupation_history', ''),
+            relationship_history = d.get('relationship_history', ''),
+            medical_history      = d.get('medical_history', ''),
+            personal_history     = d.get('personal_history', ''),
+            session_history      = d.get('session_history', ''),
+            family_tree          = d.get('family_tree', ''),
+            timeline             = d.get('timeline', ''),
+            patient_psi          = d.get('patient_psi', 'False') == 'True',
         )
-        return redirect('chat', interview_id=interview.id)
+
+        interview = Interview.objects.create(
+            createdBy = request.user,
+            patient   = patient,
+            title     = d.get('title') or f"Session #{Interview.objects.count() + 1}",
+        )
+
+        Interviewer.objects.create(interview=interview)
+        InterviewState.objects.create(interview=interview)
+
+        return redirect(f"/chat/load/{interview.id}/?new=1")
     return render(request, 'chat/new_interview.html')
+
+
+@login_required(login_url='login')
+def new_interview_from_patient(request):
+    """Creates a new session from an existing patient (no duplicate patient created)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    data       = json.loads(request.body)
+    patient_id = data.get('patient_id')
+    patient    = get_object_or_404(Patient, id=patient_id)
+
+    interview = Interview.objects.create(
+        createdBy = request.user,
+        patient   = patient,
+        title     = f"Session #{Interview.objects.count() + 1}",
+    )
+    Interviewer.objects.create(interview=interview)
+    InterviewState.objects.create(interview=interview)
+
+    return JsonResponse({'redirect': f'/chat/load/{interview.id}/?new=1'})
 
 @login_required(login_url='login')
 def load_interview(request, interview_id):
     interview = get_object_or_404(Interview, id=interview_id)
+    patient   = interview.patient
+    state     = getattr(interview, 'state', None)
+    is_new    = request.GET.get('new') == '1'
     return render(request, 'chat/load_interview.html', {
-        'interview': interview
+        'interview': interview,
+        'patient':   patient,
+        'state':     state,
+        'is_new':    is_new,
     })
+
+
+@login_required(login_url='login')
+def populate_state(request, interview_id):
+    """Dummy endpoint: populates InterviewState fields one by one with 1s delay each.
+    Streams JSON events so the frontend can update fields as they arrive."""
+    import django.http
+    interview = get_object_or_404(Interview, id=interview_id, createdBy=request.user)
+    state     = getattr(interview, 'state', None)
+    if not state:
+        return JsonResponse({'error': 'No state found'}, status=404)
+
+    fields = ['summary', 'notes', 'patient_summary', 'patient_feelings', 'patient_behavior']
+
+    def stream():
+        for field in fields:
+            time.sleep(1)
+            setattr(state, field, 'TEST 5 SECONDS')
+            state.save(update_fields=[field])
+            yield f"data: {json.dumps({'field': field, 'value': 'TEST 5 SECONDS'})}\n\n"
+        yield "data: {\"done\": true}\n\n"
+
+    return django.http.StreamingHttpResponse(stream(), content_type='text/event-stream')
 
 
 @login_required(login_url='login')
@@ -80,21 +170,26 @@ def generate_field(request):
 
 @login_required(login_url='login')
 def patient_list(request):
-    """Returns all patients as JSON — supports my_patients filter"""
+    """Returns all patients as JSON — supports my_patients and psi filters"""
     only_mine = request.GET.get('mine') == '1'
+    only_psi  = request.GET.get('psi')  == '1'
     qs = Patient.objects.all()
     if only_mine:
         qs = qs.filter(createdBy=request.user)
+    if only_psi:
+        qs = qs.filter(patient_psi=True)
     qs = qs.order_by('-createdAt')
     data = [{
-        'id':         p.id,
-        'name':       p.name        or '',
-        'age':        p.age         or '',
-        'gender':     p.gender      or '',
-        'disorder':   p.disorder    or '',
-        'profile_summary': p.profile_summary  or '',
-        'createdBy': p.createdBy.username if p.createdBy else '—',
-        'createdAt': p.createdAt.strftime('%Y-%m-%d') if p.createdAt else '',
+        'id':          p.id,
+        'name':        p.name        or '',
+        'age':         p.age         or '',
+        'gender':      p.gender      or '',
+        'disorder':    p.disorder    or '',
+        'profile_summary': p.profile_summary or '',
+        'patient_psi': p.patient_psi,
+        'is_mine':     p.createdBy == request.user,
+        'createdBy':   p.createdBy.username if p.createdBy else '—',
+        'createdAt':   p.createdAt.strftime('%Y-%m-%d') if p.createdAt else '',
     } for p in qs]
     return JsonResponse({'patients': data})
 
@@ -135,6 +230,7 @@ def patient_detail(request, patient_id):
         'timeline':             p.timeline,
         'createdBy':            p.createdBy.username if p.createdBy else '—',
         'createdAt':            p.createdAt.strftime('%Y-%m-%d') if p.createdAt else '',
+        'patient_psi':          p.patient_psi,
     })
 
 
@@ -164,8 +260,9 @@ def interview_list_api(request):
         'createdBy':    i.createdBy.username if i.createdBy else '—',
         'is_mine':      i.createdBy == request.user,
         'patient_name': i.patient.name if i.patient else '—',
+        'patient_psi':  i.patient.patient_psi if i.patient else False,
         'disorder':     i.patient.disorder if i.patient else '—',
-        'turn_count':   i.state.turn_count if hasattr(i, 'state') else 0,
+        'turn_count':   getattr(getattr(i, 'state', None), 'turn_count', 0),
         'createdAt':    i.createdAt.strftime('%Y-%m-%d %H:%M'),
         'updated_at':   i.updated_at.strftime('%Y-%m-%d %H:%M'),
         'archived':     i.archived,
@@ -207,8 +304,10 @@ def delete_interview(request, interview_id):
     interview = get_object_or_404(Interview, id=interview_id)
     if interview.createdBy != request.user and not request.user.is_superuser:
         return JsonResponse({'error': 'Permission denied'}, status=403)
-    # Cascade deletes Messages, InterviewState automatically
-    interview.patient.delete()      # manually delete patient
-    interview.interviewer.delete()  # manually delete interviewer
+    patient = interview.patient
+    # Delete the interview (cascades to Messages, InterviewState, Interviewer)
     interview.delete()
+    # Only delete the patient if it exists and is NOT a PSI dataset patient
+    if patient and not patient.patient_psi:
+        patient.delete()
     return JsonResponse({'deleted': True})

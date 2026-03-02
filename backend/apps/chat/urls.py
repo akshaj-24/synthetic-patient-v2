@@ -3,10 +3,12 @@ from . import views
 
 urlpatterns = [
     # Session CRUD
-    path('new/',                             views.new_interview,            name='new_interview'),
+    path('new/',                             views.new_interview,              name='new_interview'),
+    path('new/from-patient/',                views.new_interview_from_patient, name='new_interview_from_patient'),
     path('list/',                            views.load_list,                name='load_list'),
     path('list/api/',                        views.interview_list_api,       name='interview_list_api'),
     path('load/<int:interview_id>/',         views.load_interview,           name='load_interview'),
+    path('load/<int:interview_id>/populate/', views.populate_state,           name='populate_state'),
 
     # Chat
     path('<int:interview_id>/',              views.chat_view,                name='chat'),
