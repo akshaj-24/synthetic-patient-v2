@@ -4,8 +4,33 @@ from django.contrib.auth.models import User
 from django.conf import settings
 
 
+class NewSessionSettings(models.Model):
+    """Global generation settings used on the New Session page (no interview yet)."""
+    user        = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='newSessionSettings')
+    model       = models.CharField(max_length=100, default='qwen3:32b')
+    temperature = models.FloatField(default=1.0)   # mirrors DEFAULT_SETTINGS.GENERATION
+
+    def __str__(self):
+        return f"NewSessionSettings for {self.user.username}"
+
+
+class ChatSettings(models.Model):
+    """Per-interview LLM settings for both the patient and interviewer models."""
+    interview                = models.OneToOneField('Interview', on_delete=models.CASCADE, related_name='chatSettings')
+
+    # Patient model
+    patient_model            = models.CharField(max_length=100, default='qwen3:32b')
+    patient_temperature      = models.FloatField(default=0.7)   # mirrors DEFAULT_SETTINGS.PATIENT
+
+    # Interviewer model
+    interviewer_model        = models.CharField(max_length=100, default='qwen3:32b')
+    interviewer_temperature  = models.FloatField(default=0.3)   # mirrors DEFAULT_SETTINGS.INTERVIEWER
+
+    def __str__(self):
+        return f"ChatSettings for Interview #{self.interview_id}"
+
+
 class Patient(models.Model):
-    id                   = models.AutoField(primary_key=True)
     name                 = models.CharField(max_length=100, blank=True)
     age                  = models.IntegerField(null=True, blank=True)
     gender               = models.CharField(max_length=20, blank=True)
@@ -49,6 +74,7 @@ class Patient(models.Model):
 
 class Interviewer(models.Model):
     instructions  = models.TextField(blank=True)
+    notes = models.TextField(blank=True)
     interview    = models.OneToOneField('Interview', on_delete=models.CASCADE, related_name='interviewer')
     
     def __str__(self):

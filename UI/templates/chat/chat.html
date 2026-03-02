@@ -1,6 +1,636 @@
-<!-- each stub template -->
+{% load static %}
 <!DOCTYPE html>
-<html><body>
-  <h2>{{ view_name }} — OK</h2>
-  <a href="{% url 'home' %}">Home</a>
-</body></html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat — {{ interview.title }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    html, body { height: 100%; margin: 0; overflow: hidden; }
+
+    /* ── Layout ── */
+    .chat-layout {
+      display: flex;
+      height: calc(100vh - 49px);   /* snug below slim navbar */
+    }
+
+    /* ── LEFT: chat panel ── */
+    .chat-panel {
+      flex: 0 0 48%;
+      max-width: 48%;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #dee2e6;
+      background: #fff;
+    }
+    .chat-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid #dee2e6;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      background: #f8f9fa;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* ── Message bubbles ── */
+    .msg-bubble {
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 0.9rem;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .msg-row {
+      display: flex;
+      align-items: flex-end;
+      width: 100%;           /* stretch full row width so flex-end works */
+    }
+    .msg-row.msg-user    { justify-content: flex-end; padding-left: 40px; }
+    .msg-row.msg-patient,
+    .msg-row.msg-system  { justify-content: flex-start; padding-right: 40px; }
+    .msg-user .msg-bubble {
+      flex: 1;               /* fill remaining width after left padding */
+      background: #0d6efd;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .msg-patient .msg-bubble {
+      flex: 1;               /* fill remaining width after right padding */
+      background: #fff;
+      color: #212529;
+      border: 1px solid #dee2e6;
+      border-bottom-left-radius: 4px;
+    }
+    .msg-system .msg-bubble {
+      background: #fff3cd;
+      color: #664d03;
+      border: 1px solid #ffe69c;
+      font-size: 0.8rem;
+      font-style: italic;
+      border-radius: 8px;
+    }
+    .msg-ts {
+      font-size: 0.68rem;
+      color: #adb5bd;
+      margin-top: 3px;
+      padding: 0 4px;
+    }
+
+    /* ── Typing indicator ── */
+    .typing-indicator {
+      display: none;
+      align-items: flex-end;
+    }
+    .typing-indicator .msg-bubble {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+    }
+    .typing-indicator .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #adb5bd;
+      animation: bounce 1.3s infinite;
+    }
+    .typing-indicator .dot:nth-child(2) { animation-delay: .2s; }
+    .typing-indicator .dot:nth-child(3) { animation-delay: .4s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40%           { transform: translateY(-6px); }
+    }
+
+    /* ── Bottom bar ── */
+    .chat-input-bar {
+      padding: 12px 14px 18px;
+      border-top: 1px solid #0d6efd;
+      background: #f0f2f5;
+      box-shadow: 0 -2px 8px rgba(0,0,0,.06);
+      
+    }
+    .chat-input-bar .form-control { resize: none; }
+
+    /* ── RIGHT panel ── */
+    .right-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+    .patient-panel {
+      flex: 1 1 0;
+      min-height: 0;          /* critical: lets flex child shrink & scroll */
+      overflow-y: auto;
+      padding: 16px 20px 24px;
+      background: #fff;
+      border-bottom: 1px solid #dee2e6;
+    }
+    .notes-panel {
+      flex: 0 0 220px;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 12px 16px 16px;
+      background: #fafafa;
+      border-top: 1px solid #dee2e6;
+    }
+    .notes-panel textarea {
+      flex: 1;
+      min-height: 0;
+      resize: none;
+      font-size: 0.92rem;
+    }
+
+    /* ── Collapsible sections ── */
+    .section-heading {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: #6c757d;
+      margin: 14px 0 6px;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 12px;
+      font-size: 0.92rem;
+    }
+    .info-label { color: #6c757d; font-size: 0.82rem; }
+    .info-value { font-weight: 500; }
+
+    .patient-text-block {
+      font-size: 0.92rem;
+      color: #343a40;
+      line-height: 1.6;
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 10px 12px;
+      white-space: pre-wrap;
+    }
+
+    /* ── Settings modal ── */
+    .settings-offcanvas { width: 320px !important; }
+
+    /* ── Tone select ── */
+    .tone-select {
+      min-width: 140px;
+      max-width: 140px;
+      font-size: 0.88rem;
+      height: 42px;          /* match textarea min-height */
+      padding-top: 0;
+      padding-bottom: 0;
+      white-space: nowrap;
+    }
+
+    /* ── Scrollbars ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #dee2e6; border-radius: 3px; }
+    /* Darker scrollbar inside notes textarea */
+    .notes-panel textarea::-webkit-scrollbar-thumb { background: #868e96; }
+  </style>
+</head>
+<body>
+
+{% include 'partials/navbar.html' %}
+
+<div class="chat-layout">
+
+  <!-- ═══════════════════════════════════════════
+       LEFT  — Chat
+  ═══════════════════════════════════════════ -->
+  <div class="chat-panel">
+
+    <!-- Header -->
+    <div class="chat-header">
+      <a href="{% url 'load_list' %}" class="btn btn-sm btn-outline-secondary px-2 py-1" title="All sessions">
+        <i class="bi bi-arrow-left"></i>
+      </a>
+      <div class="flex-grow-1">
+        <div class="fw-semibold">
+          <a href="{% url 'load_interview' interview.id %}" class="text-decoration-none text-dark">{{ interview.title }}</a>
+        </div>
+        <div class="text-muted" style="font-size:.75rem">
+          {{ interview.patient.name }} &middot; {{ interview.patient.disorder|truncatechars:50 }}
+        </div>
+      </div>
+      <button class="btn btn-sm btn-outline-secondary px-2 py-1" type="button"
+              data-bs-toggle="offcanvas" data-bs-target="#patientSettingsOffcanvas"
+              title="Patient settings">
+        <i class="bi bi-person-gear"></i>
+      </button>
+      <button class="btn btn-sm btn-outline-secondary px-2 py-1" type="button"
+              data-bs-toggle="modal" data-bs-target="#downloadModal"
+              title="Download transcript">
+        <i class="bi bi-download"></i>
+      </button>
+    </div>
+
+    <!-- Messages -->
+    <div class="chat-messages" id="chatMessages">
+      {% for msg in messages %}
+        {# Date separator — show once per day, only when message is not from today #}
+        {% ifchanged msg.timestamp|date:"Y-m-d" %}
+          <div class="text-center my-2">
+            <span style="font-size:.7rem;color:#adb5bd;background:#f8f9fa;padding:2px 10px;border-radius:20px;">
+              {% now "Y-m-d" as today %}
+              {% if msg.timestamp|date:"Y-m-d" == today %}Today{% else %}{{ msg.timestamp|date:"N j, Y" }}{% endif %}
+            </span>
+          </div>
+        {% endifchanged %}
+        <div class="msg-row msg-{{ msg.role }}">
+          <div>
+            <div class="msg-bubble">{{ msg.content }}</div>
+            <div class="msg-ts {% if msg.role == 'user' %}text-end{% endif %}">
+              {{ msg.timestamp|time:"H:i" }}
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="text-center text-muted small mt-4" id="emptyState">
+          <i class="bi bi-chat-dots fs-2 d-block mb-2"></i>
+          Start the interview by sending a message below.
+        </div>
+      {% endfor %}
+
+      <!-- Typing indicator -->
+      <div class="msg-row msg-patient typing-indicator" id="typingIndicator">
+        <div class="msg-bubble">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input bar -->
+    <div class="chat-input-bar">
+      <div class="d-flex gap-2 align-items-end">
+        <!-- Tone dropdown -->
+        <select class="form-select tone-select" id="toneSelect" title="Interviewer tone">
+          <option value="neutral">😐 Neutral</option>
+          <option value="empathetic">🤝 Empathetic</option>
+          <option value="clinical">🔬 Clinical</option>
+          <option value="exploratory">🔍 Exploratory</option>
+          <option value="supportive">💙 Supportive</option>
+          <option value="challenging">⚡ Challenging</option>
+          <option value="reflective">🪞 Reflective</option>
+        </select>
+        <!-- Message textarea -->
+        <textarea class="form-control" id="messageInput" rows="1"
+                  placeholder="Type your message…"
+                  style="min-height:42px; max-height:120px; overflow-y:auto; flex: 1 1 0; min-width: 0;"
+                  onkeydown="handleKey(event)"></textarea>
+        <!-- Send -->
+        <button class="btn btn-primary px-3" id="sendBtn" onclick="sendMessage()" title="Send">
+          <i class="bi bi-send-fill" id="sendIcon"></i>
+        </button>
+        <!-- Autogenerate question -->
+        <button class="btn btn-outline-secondary px-3" id="autoGenBtn"
+                onclick="triggerAutogenQuestion()" title="Autogenerate question">
+          <i class="bi bi-stars"></i>
+        </button>
+        <!-- Interviewer settings -->
+        <button class="btn btn-outline-secondary px-3" type="button"
+                data-bs-toggle="offcanvas" data-bs-target="#interviewerSettingsOffcanvas"
+                title="Interviewer settings">
+          <i class="bi bi-sliders"></i>
+        </button>
+      </div>
+    </div>
+  </div><!-- /chat-panel -->
+
+
+  <!-- ═══════════════════════════════════════════
+       RIGHT — Patient details + Notes
+  ═══════════════════════════════════════════ -->
+  <div class="right-panel">
+
+    <!-- ── Top: Patient details ── -->
+    <div class="patient-panel">
+
+      <!-- Demographics -->
+      <p class="section-heading">Patient</p>
+      <div class="info-grid mb-3">
+        <div><div class="info-label">Name</div>       <div class="info-value">{{ interview.patient.name|default:"—" }}</div></div>
+        <div><div class="info-label">Age</div>        <div class="info-value">{{ interview.patient.age|default:"—" }}</div></div>
+        <div><div class="info-label">Gender</div>     <div class="info-value">{{ interview.patient.gender|default:"—" }}</div></div>
+        <div><div class="info-label">Ethnicity</div>  <div class="info-value">{{ interview.patient.ethnicity|default:"—" }}</div></div>
+        <div><div class="info-label">Education</div>  <div class="info-value">{{ interview.patient.education|default:"—" }}</div></div>
+        <div><div class="info-label">Occupation</div> <div class="info-value">{{ interview.patient.occupation|default:"—" }}</div></div>
+        <div><div class="info-label">Disorder</div>   <div class="info-value">{{ interview.patient.disorder|default:"—" }}</div></div>
+        <div><div class="info-label">Marital</div>    <div class="info-value">{{ interview.patient.marital_status|default:"—" }}</div></div>
+      </div>
+
+      {% if interview.patient.profile_summary %}
+        <p class="section-heading">Profile Summary</p>
+        <div class="patient-text-block mb-3">{{ interview.patient.profile_summary }}</div>
+      {% endif %}
+
+      {% if interview.patient.intake %}
+        <p class="section-heading">Intake</p>
+        <div class="patient-text-block mb-3">{{ interview.patient.intake }}</div>
+      {% endif %}
+
+      {% if interview.patient.vignette %}
+        <p class="section-heading">Vignette</p>
+        <div class="patient-text-block mb-3">{{ interview.patient.vignette }}</div>
+      {% endif %}
+
+      <!-- History sections -->
+      {% with p=interview.patient %}
+      {% if p.childhood_history or p.education_history or p.occupation_history or p.relationship_history or p.medical_history or p.personal_history or p.session_history %}
+        <p class="section-heading">History</p>
+        <div class="accordion accordion-flush mb-3" id="historyAccordion">
+
+          {% if p.childhood_history %}
+          <div class="accordion-item border rounded mb-1">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed py-2 px-3" type="button"
+                      data-bs-toggle="collapse" data-bs-target="#hist-childhood">
+                <span class="small fw-semibold">Childhood</span>
+              </button>
+            </h2>
+            <div id="hist-childhood" class="accordion-collapse collapse">
+              <div class="accordion-body py-2 px-3 small" style="white-space:pre-wrap">{{ p.childhood_history }}</div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if p.education_history %}
+          <div class="accordion-item border rounded mb-1">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed py-2 px-3" type="button"
+                      data-bs-toggle="collapse" data-bs-target="#hist-education">
+                <span class="small fw-semibold">Education</span>
+              </button>
+            </h2>
+            <div id="hist-education" class="accordion-collapse collapse">
+              <div class="accordion-body py-2 px-3 small" style="white-space:pre-wrap">{{ p.education_history }}</div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if p.occupation_history %}
+          <div class="accordion-item border rounded mb-1">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed py-2 px-3" type="button"
+                      data-bs-toggle="collapse" data-bs-target="#hist-occupation">
+                <span class="small fw-semibold">Occupation</span>
+              </button>
+            </h2>
+            <div id="hist-occupation" class="accordion-collapse collapse">
+              <div class="accordion-body py-2 px-3 small" style="white-space:pre-wrap">{{ p.occupation_history }}</div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if p.relationship_history %}
+          <div class="accordion-item border rounded mb-1">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed py-2 px-3" type="button"
+                      data-bs-toggle="collapse" data-bs-target="#hist-relationship">
+                <span class="small fw-semibold">Relationships</span>
+              </button>
+            </h2>
+            <div id="hist-relationship" class="accordion-collapse collapse">
+              <div class="accordion-body py-2 px-3 small" style="white-space:pre-wrap">{{ p.relationship_history }}</div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if p.medical_history %}
+          <div class="accordion-item border rounded mb-1">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed py-2 px-3" type="button"
+                      data-bs-toggle="collapse" data-bs-target="#hist-medical">
+                <span class="small fw-semibold">Medical</span>
+              </button>
+            </h2>
+            <div id="hist-medical" class="accordion-collapse collapse">
+              <div class="accordion-body py-2 px-3 small" style="white-space:pre-wrap">{{ p.medical_history }}</div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if p.personal_history %}
+          <div class="accordion-item border rounded mb-1">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed py-2 px-3" type="button"
+                      data-bs-toggle="collapse" data-bs-target="#hist-personal">
+                <span class="small fw-semibold">Personal</span>
+              </button>
+            </h2>
+            <div id="hist-personal" class="accordion-collapse collapse">
+              <div class="accordion-body py-2 px-3 small" style="white-space:pre-wrap">{{ p.personal_history }}</div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if p.session_history %}
+          <div class="accordion-item border rounded mb-1">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed py-2 px-3" type="button"
+                      data-bs-toggle="collapse" data-bs-target="#hist-session">
+                <span class="small fw-semibold">Session</span>
+              </button>
+            </h2>
+            <div id="hist-session" class="accordion-collapse collapse">
+              <div class="accordion-body py-2 px-3 small" style="white-space:pre-wrap">{{ p.session_history }}</div>
+            </div>
+          </div>
+          {% endif %}
+
+        </div><!-- /historyAccordion -->
+      {% endif %}
+      {% endwith %}
+
+      {% if interview.patient.family_tree %}
+        <p class="section-heading">Family Tree</p>
+        <div class="patient-text-block mb-3">{{ interview.patient.family_tree }}</div>
+      {% endif %}
+
+      {% if interview.patient.timeline %}
+        <p class="section-heading">Timeline</p>
+        <div class="patient-text-block mb-3">{{ interview.patient.timeline }}</div>
+      {% endif %}
+
+    </div><!-- /patient-panel -->
+
+    <!-- ── Bottom: Interviewer Notes ── -->
+    <div class="notes-panel">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="fw-semibold small"><i class="bi bi-pencil-square me-1"></i>Interviewer Notes</span>
+        <span id="notesSaveStatus" class="text-muted" style="font-size:.72rem; transition: opacity .4s;"></span>
+      </div>
+      <textarea class="form-control" id="notesTextarea"
+                placeholder="Add your observations, hypotheses, follow-up questions…"
+                >{{ interview.interviewer.notes }}</textarea>
+    </div>
+
+  </div><!-- /right-panel -->
+
+</div><!-- /chat-layout -->
+
+
+<!-- ════════════════════════════════════════════════
+     Settings Offcanvas
+════════════════════════════════════════════════ -->
+<div class="offcanvas offcanvas-end settings-offcanvas" tabindex="-1"
+     id="patientSettingsOffcanvas" data-settings-id="patient">
+  <div class="offcanvas-header border-bottom">
+    <h6 class="offcanvas-title"><i class="bi bi-person-gear me-2"></i>Patient Settings</h6>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body d-flex flex-column gap-4">
+
+    <!-- Model selector -->
+    <div>
+      <label class="form-label fw-semibold mb-1">Model</label>
+      <select class="form-select" id="modelSelect">
+        <option value="qwen3:32b" {% if chat_settings.patient_model == 'qwen3:32b' %}selected{% endif %}>Qwen 3 32B</option>
+      </select>
+    </div>
+
+    <!-- Temperature slider -->
+    <div>
+      <label class="form-label fw-semibold mb-1">Response Style</label>
+      <div class="d-flex justify-content-between small text-muted mb-2">
+        <span>Consistent</span><span>Creative</span>
+      </div>
+      <input type="range" class="form-range" id="tempSlider"
+             min="0" max="1" step="0.01">
+      <div class="text-center small mt-1">
+        Temperature: <strong id="tempValue"></strong>
+      </div>
+    </div>
+
+    <button class="btn btn-dark w-100" id="updateSettingsBtn" onclick="updateSettings()">
+      <i class="bi bi-check2-circle me-1"></i> Update
+    </button>
+    <div id="settingsSaveStatus" class="text-center text-success small" style="display:none;">
+      <i class="bi bi-check-circle me-1"></i> Settings updated
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     Interviewer Settings Offcanvas
+════════════════════════════════════════════════ -->
+<div class="offcanvas offcanvas-end settings-offcanvas" tabindex="-1"
+     id="interviewerSettingsOffcanvas" data-settings-id="interviewer">
+  <div class="offcanvas-header border-bottom">
+    <h6 class="offcanvas-title"><i class="bi bi-sliders me-2"></i>Interviewer Settings</h6>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body d-flex flex-column gap-4">
+
+    <!-- Model selector -->
+    <div>
+      <label class="form-label fw-semibold mb-1">Model</label>
+      <select class="form-select" id="interviewerModelSelect">
+        <option value="qwen3:32b" {% if chat_settings.interviewer_model == 'qwen3:32b' %}selected{% endif %}>Qwen 3 32B</option>
+      </select>
+    </div>
+
+    <!-- Temperature slider -->
+    <div>
+      <label class="form-label fw-semibold mb-1">Response Style</label>
+      <div class="d-flex justify-content-between small text-muted mb-2">
+        <span>Consistent</span><span>Creative</span>
+      </div>
+      <input type="range" class="form-range" id="interviewerTempSlider"
+             min="0" max="1" step="0.01">
+      <div class="text-center small mt-1">
+        Temperature: <strong id="interviewerTempValue"></strong>
+      </div>
+    </div>
+
+    <button class="btn btn-dark w-100" id="updateInterviewerSettingsBtn" onclick="updateInterviewerSettings()">
+      <i class="bi bi-check2-circle me-1"></i> Update
+    </button>
+    <div id="interviewerSettingsSaveStatus" class="text-center text-success small" style="display:none;">
+      <i class="bi bi-check-circle me-1"></i> Settings updated
+    </div>
+
+    <hr class="my-1">
+
+    <!-- Autogenerate & send toggle -->
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <div class="fw-semibold" style="font-size:.9rem">Autogenerate &amp; send</div>
+        <div class="text-muted" style="font-size:.75rem">After each patient reply, automatically generate and send the next question</div>
+      </div>
+      <div class="form-check form-switch ms-3 mb-0">
+        <input class="form-check-input" type="checkbox" id="autoGenToggle" role="switch"
+               onchange="onAutoGenToggleChange(this)">
+      </div>
+    </div>
+
+    <!-- Autogenerate warning -->
+    <div class="alert alert-warning d-flex gap-2 align-items-start py-2 px-3 mb-0"
+         style="font-size:.78rem; display:none;"
+         id="autoGenWarning">
+      <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+      <span>While running, you <strong>cannot type or manually send</strong> messages. Use the <i class="bi bi-stop-circle"></i> stop button in the chat bar to cancel.</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     Download Transcript Modal
+════════════════════════════════════════════════ -->
+<div class="modal fade" id="downloadModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:340px">
+    <div class="modal-content">
+      <div class="modal-header border-bottom py-3">
+        <h6 class="modal-title fw-semibold"><i class="bi bi-download me-2"></i>Download Transcript</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body d-grid gap-2 py-3">
+        <a href="{% url 'download_transcript' interview.id %}?format=txt"
+           class="btn btn-outline-dark" download>
+          <i class="bi bi-file-text me-2"></i>Download as <strong>.txt</strong>
+        </a>
+        <a href="{% url 'download_transcript' interview.id %}?format=json"
+           class="btn btn-outline-dark" download>
+          <i class="bi bi-filetype-json me-2"></i>Download as <strong>.json</strong>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     JS
+════════════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Inject Django template values as a config object, then load the external script -->
+<script>
+  window.CHAT_CONFIG = {
+    interviewId:             {{ interview.id }},
+    csrfToken:               '{{ csrf_token }}',
+    patientModel:            '{{ chat_settings.patient_model }}',
+    patientTemperature:      {{ chat_settings.patient_temperature }},
+    interviewerModel:        '{{ chat_settings.interviewer_model }}',
+    interviewerTemperature:  {{ chat_settings.interviewer_temperature }},
+  };
+</script>
+<script src="{% static 'js/chat_scripts.js' %}"></script>
+</body>
+</html>

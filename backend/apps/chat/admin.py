@@ -1,6 +1,6 @@
 # apps/chat/admin.py
 from django.contrib import admin
-from .models import Patient, Interviewer, Interview, InterviewState, Message
+from .models import Patient, Interviewer, Interview, InterviewState, Message, NewSessionSettings, ChatSettings
 
 @admin.register(Interview)
 class InterviewAdmin(admin.ModelAdmin):
@@ -36,3 +36,13 @@ class InterviewStateAdmin(admin.ModelAdmin):
 @admin.register(Interviewer)
 class InterviewerAdmin(admin.ModelAdmin):
     list_display  = ('id', 'interview')
+
+@admin.register(NewSessionSettings)
+class NewSessionSettingsAdmin(admin.ModelAdmin):
+    list_display  = ('id', 'user', 'model', 'temperature')
+    search_fields = ('user__username', 'model')
+
+@admin.register(ChatSettings)
+class ChatSettingsAdmin(admin.ModelAdmin):
+    list_display  = ('id', 'interview', 'patient_model', 'patient_temperature', 'interviewer_model', 'interviewer_temperature')
+    search_fields = ('interview__title',)

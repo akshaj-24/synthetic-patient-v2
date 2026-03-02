@@ -1,8 +1,8 @@
 const sectionFields = {
     identity: [
-        { id: 'name',           deps: ['gender'] },
         { id: 'age',            deps: [] },
         { id: 'gender',         deps: [] },
+        { id: 'name',           deps: ['gender'] },
         { id: 'ethnicity',      deps: [] },
         { id: 'marital_status', deps: ['age'] },
         { id: 'education',      deps: ['age'] },
@@ -12,7 +12,8 @@ const sectionFields = {
         { id: 'disorder',      deps: [] },
         { id: 'type',          deps: ['disorder'] },
         { id: 'base_emotions', deps: ['disorder', 'type'] },
-        { id: 'intake',        deps: ['disorder', 'type', 'base_emotions', 'name', 'age', 'gender', 'occupation', 'trigger'] },
+        // trigger removed from deps to avoid cross-section conflict
+        { id: 'intake',        deps: ['disorder', 'type', 'base_emotions', 'name', 'age', 'gender', 'occupation'] },
     ],
     cbt: [
         { id: 'helpless_beliefs',    deps: ['disorder', 'type', 'base_emotions'] },
@@ -39,6 +40,7 @@ const sectionFields = {
         { id: 'vignette', deps: ['name', 'age', 'disorder', 'childhood_history', 'education_history', 'occupation_history', 'relationship_history', 'medical_history', 'personal_history', 'intake'] },
     ],
 };
+
 
 function getDeps(fieldId) {
     for (const section of Object.values(sectionFields)) {

@@ -3,10 +3,27 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.core.exceptions import PermissionDenied
 from .models import Interview, Patient, Interviewer, InterviewState
+from .OllamaLLM import CHANGE_SETTINGS
 import json
 import time
-from . import autogenerate
+from . import autogenerate_profile
+from . import autogenerate_state
 # TODO REFACTOR FOR autogenerate.py
+
+
+@login_required(login_url='login')
+def default_settings(request):
+    """GET: return current generation settings. POST: update them."""
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        sid  = data.get('settings_id', 'generation')
+        if sid == 'generation':
+            result = CHANGE_SETTINGS.save_new_session_settings(request.user, data)
+            return JsonResponse({'ok': True, 'settings_id': sid, **result})
+        return JsonResponse({'ok': True, 'settings_id': sid})
+    ns = CHANGE_SETTINGS.get_new_session_settings(request.user)
+    return JsonResponse(CHANGE_SETTINGS.new_session_settings_as_dict(ns))
+
 
 @login_required(login_url='login')
 def new_interview(request):
@@ -60,6 +77,11 @@ def new_interview(request):
         Interviewer.objects.create(interview=interview)
         InterviewState.objects.create(interview=interview)
 
+        # Seed ChatSettings from NewSessionSettings (all four fields) then clear
+        ns = CHANGE_SETTINGS.get_new_session_settings(request.user)
+        CHANGE_SETTINGS.seed_chat_settings(interview, ns)
+        CHANGE_SETTINGS.delete_new_session_settings(request.user)
+
         return redirect(f"/chat/load/{interview.id}/?new=1")
     return render(request, 'chat/new_interview.html')
 
@@ -81,6 +103,11 @@ def new_interview_from_patient(request):
     Interviewer.objects.create(interview=interview)
     InterviewState.objects.create(interview=interview)
 
+    # Seed ChatSettings from NewSessionSettings (all four fields) then clear
+    ns = CHANGE_SETTINGS.get_new_session_settings(request.user)
+    CHANGE_SETTINGS.seed_chat_settings(interview, ns)
+    CHANGE_SETTINGS.delete_new_session_settings(request.user)
+
     return JsonResponse({'redirect': f'/chat/load/{interview.id}/?new=1'})
 
 @login_required(login_url='login')
@@ -96,7 +123,7 @@ def load_interview(request, interview_id):
         'is_new':    is_new,
     })
 
-
+# INTERVIEW_STATE_GENERATE
 @login_required(login_url='login')
 def populate_state(request, interview_id):
     """Dummy endpoint: populates InterviewState fields one by one with 1s delay each.
@@ -108,14 +135,15 @@ def populate_state(request, interview_id):
         return JsonResponse({'error': 'No state found'}, status=404)
 
     fields = ['summary', 'notes', 'patient_summary', 'patient_feelings', 'patient_behavior']
+    chat_settings = CHANGE_SETTINGS.get_chat_settings(interview)
 
     def stream():
         for field in fields:
-            time.sleep(1)
-            setattr(state, field, 'TEST 5 SECONDS')
+            resp = autogenerate_state.response(field, state, settings=chat_settings)
+            setattr(state, field, resp)
             state.save(update_fields=[field])
-            yield f"data: {json.dumps({'field': field, 'value': 'TEST 5 SECONDS'})}\n\n"
-        yield "data: {\"done\": true}\n\n"
+            yield f"data: {json.dumps({'field': field, 'value': resp})}\n\n"
+        yield 'data: {"done": true}\n\n'
 
     return django.http.StreamingHttpResponse(stream(), content_type='text/event-stream')
 
@@ -126,9 +154,11 @@ def chat_view(request, interview_id):
     messages  = interview.messages.all()
     interview.is_active = True
     interview.save()
+    chat_settings = CHANGE_SETTINGS.get_chat_settings(interview)
     return render(request, 'chat/chat.html', {
-        'interview': interview,
-        'messages':  messages,
+        'interview':      interview,
+        'messages':       messages,
+        'chat_settings':  chat_settings,
     })
 
 
@@ -138,14 +168,77 @@ def send_message(request, interview_id):
         return JsonResponse({'error': 'POST required'}, status=405)
     interview  = get_object_or_404(Interview, id=interview_id, createdBy=request.user)
     user_input = request.POST.get('message', '').strip()
+    tone       = request.POST.get('tone', 'neutral')
     if not user_input:
         return JsonResponse({'error': 'Empty message'}, status=400)
-    interview.messages.create(role='user', content=user_input)
-    reply = 'LLM response placeholder'
-    interview.messages.create(role='assistant', content=reply)
-    interview.state.turn_count += 1
-    interview.state.save()
+
+    # Persist user message (store tone so it appears in transcripts)
+    interview.messages.create(role='user', content=user_input, tone=tone)
+
+    # Get patient response (LLM call — replace dummy logic here)
+    reply = getResponsePatient(interview, user_input, tone)
+
+    # Persist patient reply (tone belongs to the interviewer, not the patient)
+    interview.messages.create(role='patient', content=reply)
+
+    state = interview.state
+    state.turn_count += 1
+    state.save(update_fields=['turn_count'])
+
     return JsonResponse({'response': reply})
+
+
+def getResponsePatient(interview, user_input, tone='neutral'):
+    """Generate the patient's reply. Replace dummy logic with LLM call."""
+    # TODO: build context, call LLM, update state vars
+    time.sleep(2)  # Simulates LLM latency
+    return f"[Patient response placeholder — tone: {tone}]"
+
+
+@login_required(login_url='login')
+def update_settings(request, interview_id):
+    """Save chat generation settings for this interview.
+
+    Payload: { "temperature": float, "model": str, ...any future keys }
+    All processing is delegated to process_settings() so you can extend it
+    in a separate module without touching this view.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    interview = get_object_or_404(Interview, id=interview_id, createdBy=request.user)
+    data = json.loads(request.body)
+    result = process_settings(interview, data)
+    return JsonResponse({'ok': True, **result})
+
+
+def process_settings(interview, settings: dict) -> dict:
+    """Save settings to the ChatSettings model for this interview."""
+    return CHANGE_SETTINGS.save_chat_settings(interview, settings)
+
+
+@login_required(login_url='login')
+def autogenerate_question(request, interview_id):
+    """Generate a suggested interviewer question. Replace dummy logic with LLM call."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    get_object_or_404(Interview, id=interview_id, createdBy=request.user)
+    # TODO: build context from interview history and call LLM
+    time.sleep(3)
+    return JsonResponse({'question': 'SAMPLE QUESTION'})
+
+
+@login_required(login_url='login')
+def save_notes(request, interview_id):
+    """Auto-save interviewer notes."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    interview   = get_object_or_404(Interview, id=interview_id, createdBy=request.user)
+    data        = json.loads(request.body)
+    notes       = data.get('notes', '')
+    interviewer = interview.interviewer
+    interviewer.notes = notes
+    interviewer.save(update_fields=['notes'])
+    return JsonResponse({'ok': True})
 
 
 @login_required(login_url='login')
@@ -163,8 +256,8 @@ def generate_field(request):
     data  = json.loads(request.body)
     field = data.get('field', '')
     deps  = data.get('dependencies', {})
-    
-    return JsonResponse({'value': autogenerate.generateField(field, deps)})
+    ns_settings = CHANGE_SETTINGS.get_new_session_settings(request.user)
+    return JsonResponse({'value': autogenerate_profile.generateField(field, deps, settings=ns_settings)})
 
 
 
@@ -311,3 +404,65 @@ def delete_interview(request, interview_id):
     if patient and not patient.patient_psi:
         patient.delete()
     return JsonResponse({'deleted': True})
+
+
+@login_required(login_url='login')
+def download_transcript(request, interview_id):
+    """Download the interview transcript as TXT or JSON."""
+    import json as _json
+    from django.http import HttpResponse
+
+    interview = get_object_or_404(Interview, id=interview_id, createdBy=request.user)
+    fmt       = request.GET.get('format', 'txt').lower()
+    messages  = interview.messages.order_by('timestamp')
+    state     = getattr(interview, 'state', None)
+
+    meta = {
+        'id':         interview.id,
+        'title':      interview.title or f'Interview #{interview.id}',
+        'user':       interview.createdBy.username if interview.createdBy else '—',
+        'createdAt':  interview.createdAt.strftime('%Y-%m-%d %H:%M:%S'),
+        'turns':      getattr(state, 'turn_count', 0),
+        'patient':    interview.patient.name if interview.patient else '—',
+        'disorder':   interview.patient.disorder if interview.patient else '—',
+    }
+
+    if fmt == 'json':
+        payload = {
+            'system': meta,
+            'messages': [
+                {
+                    'id':        m.id,
+                    'role':      m.role,
+                    'content':   m.content,
+                    'tone':      m.tone or '',
+                    'timestamp': m.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                }
+                for m in messages
+            ],
+        }
+        response = HttpResponse(
+            _json.dumps(payload, indent=2),
+            content_type='application/json',
+        )
+        filename = f"transcript_{interview.id}.json"
+    else:
+        lines = [
+            f"system: id={meta['id']}",
+            f"system: title={meta['title']}",
+            f"system: user={meta['user']}",
+            f"system: createdAt={meta['createdAt']}",
+            f"system: turns={meta['turns']}",
+            f"system: patient={meta['patient']}",
+            f"system: disorder={meta['disorder']}",
+            '',
+        ]
+        for m in messages:
+            tone_suffix = f"  [{m.tone}]" if m.tone else ""
+            lines.append(f"{m.role}{tone_suffix}: {m.content}")
+            lines.append('')
+        response = HttpResponse('\n'.join(lines), content_type='text/plain; charset=utf-8')
+        filename = f"transcript_{interview.id}.txt"
+
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response

@@ -42,9 +42,14 @@
     <div>
       <h3 class="mb-0">Session Created ✓</h3>
     </div>
-    <a href="/chat/{{ interview.id }}/" class="btn btn-dark">
-      <i class="bi bi-play-fill me-1"></i> Start Chat
-    </a>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#downloadModal">
+        <i class="bi bi-download me-1"></i>
+      </button>
+      <a href="/chat/{{ interview.id }}/" class="btn btn-dark">
+        <i class="bi bi-play-fill me-1"></i> Start Chat
+      </a>
+    </div>
   </div>
 
   <!-- ── INTERVIEW ── -->
@@ -174,7 +179,228 @@
 
 </div>
 
+<!-- ══ Download Profile Modal ══ -->
+<div class="modal fade" id="downloadModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="downloadModalLabel"><i class="bi bi-download me-2"></i>Download Profile</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-4">Choose a format to export the full patient &amp; session profile.</p>
+        <div class="d-grid gap-3">
+          <button class="btn btn-outline-dark btn-lg" onclick="downloadProfile('txt')">
+            <i class="bi bi-file-text me-2"></i>Download as <strong>.txt</strong>
+          </button>
+          <button class="btn btn-outline-dark btn-lg" onclick="downloadProfile('json')">
+            <i class="bi bi-filetype-json me-2"></i>Download as <strong>.json</strong>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
+  // ── Profile data injected from Django ──
+  const profileData = {
+    interview: {
+      id:          {{ interview.id }},
+      title:       "{{ interview.title|default:''|escapejs }}",
+      created_by:  "{{ interview.createdBy.username|default:'' }}",
+      created_at:  "{{ interview.createdAt|date:'Y-m-d H:i:s' }}",
+      is_active:   {{ interview.is_active|lower }},
+      archived:    {{ interview.archived|lower }}
+    },
+    patient: {
+      id:                   {% if patient %}{{ patient.id }}{% else %}null{% endif %},
+      name:                 "{% if patient %}{{ patient.name|escapejs }}{% endif %}",
+      age:                  {% if patient and patient.age %}{{ patient.age }}{% else %}null{% endif %},
+      gender:               "{% if patient %}{{ patient.gender|escapejs }}{% endif %}",
+      ethnicity:            "{% if patient %}{{ patient.ethnicity|escapejs }}{% endif %}",
+      marital_status:       "{% if patient %}{{ patient.marital_status|escapejs }}{% endif %}",
+      education:            "{% if patient %}{{ patient.education|escapejs }}{% endif %}",
+      occupation:           "{% if patient %}{{ patient.occupation|escapejs }}{% endif %}",
+      patient_psi:          {% if patient %}{{ patient.patient_psi|lower }}{% else %}false{% endif %},
+      disorder:             "{% if patient %}{{ patient.disorder|escapejs }}{% endif %}",
+      type:                 {% if patient %}{{ patient.type|safe }}{% else %}[]{% endif %},
+      base_emotions:        {% if patient %}{{ patient.base_emotions|safe }}{% else %}[]{% endif %},
+      intake:               "{% if patient %}{{ patient.intake|escapejs }}{% endif %}",
+      helpless_beliefs:     {% if patient %}{{ patient.helpless_beliefs|safe }}{% else %}[]{% endif %},
+      unlovable_beliefs:    {% if patient %}{{ patient.unlovable_beliefs|safe }}{% else %}[]{% endif %},
+      worthless_beliefs:    {% if patient %}{{ patient.worthless_beliefs|safe }}{% else %}[]{% endif %},
+      intermediate_belief:  "{% if patient %}{{ patient.intermediate_belief|escapejs }}{% endif %}",
+      trigger:              "{% if patient %}{{ patient.trigger|escapejs }}{% endif %}",
+      auto_thoughts:        "{% if patient %}{{ patient.auto_thoughts|escapejs }}{% endif %}",
+      coping_strategies:    "{% if patient %}{{ patient.coping_strategies|escapejs }}{% endif %}",
+      behavior:             "{% if patient %}{{ patient.behavior|escapejs }}{% endif %}",
+      childhood_history:    "{% if patient %}{{ patient.childhood_history|escapejs }}{% endif %}",
+      education_history:    "{% if patient %}{{ patient.education_history|escapejs }}{% endif %}",
+      occupation_history:   "{% if patient %}{{ patient.occupation_history|escapejs }}{% endif %}",
+      relationship_history: "{% if patient %}{{ patient.relationship_history|escapejs }}{% endif %}",
+      medical_history:      "{% if patient %}{{ patient.medical_history|escapejs }}{% endif %}",
+      personal_history:     "{% if patient %}{{ patient.personal_history|escapejs }}{% endif %}",
+      session_history:      "{% if patient %}{{ patient.session_history|escapejs }}{% endif %}",
+      family_tree:          "{% if patient %}{{ patient.family_tree|escapejs }}{% endif %}",
+      timeline:             "{% if patient %}{{ patient.timeline|escapejs }}{% endif %}",
+      vignette:             "{% if patient %}{{ patient.vignette|escapejs }}{% endif %}",
+      profile_summary:      "{% if patient %}{{ patient.profile_summary|escapejs }}{% endif %}",
+      created_at:           "{% if patient %}{{ patient.createdAt|date:'Y-m-d H:i:s' }}{% endif %}"
+    },
+    state: {
+      id:               {% if state %}{{ state.id }}{% else %}null{% endif %},
+      turn_count:       {% if state %}{{ state.turn_count }}{% else %}null{% endif %},
+      summary_freq:     {% if state %}{{ state.summary_freq }}{% else %}null{% endif %},
+      summary_turn:     {% if state %}{{ state.summary_turn }}{% else %}null{% endif %},
+      summary:          "{% if state %}{{ state.summary|escapejs }}{% endif %}",
+      notes:            "{% if state %}{{ state.notes|escapejs }}{% endif %}",
+      patient_summary:  "{% if state %}{{ state.patient_summary|escapejs }}{% endif %}",
+      patient_feelings: "{% if state %}{{ state.patient_feelings|escapejs }}{% endif %}",
+      patient_behavior: "{% if state %}{{ state.patient_behavior|escapejs }}{% endif %}"
+    }
+  };
+
+  function downloadProfile(fmt) {
+    const filename = `patient_${profileData.patient.id || 'unknown'}_session_${profileData.interview.id}`;
+    let content, mime, ext;
+
+    if (fmt === 'json') {
+      content = JSON.stringify(profileData, null, 2);
+      mime    = 'application/json';
+      ext     = 'json';
+    } else {
+      const lines = [];
+      const hr = () => lines.push('=' .repeat(60));
+      const hr2 = () => lines.push('-'.repeat(60));
+      const field = (label, value) => {
+        const v = Array.isArray(value)
+          ? (value.length ? value.join(', ') : '—')
+          : (value === null || value === undefined || value === '' ? '—' : String(value));
+        lines.push(`${label.padEnd(22)}: ${v}`);
+      };
+
+      hr(); lines.push('  INTERVIEW SESSION PROFILE'); hr();
+      lines.push('');
+
+      lines.push('[ INTERVIEW ]');
+      hr2();
+      field('ID',         profileData.interview.id);
+      field('Title',      profileData.interview.title);
+      field('Created By', profileData.interview.created_by);
+      field('Created At', profileData.interview.created_at);
+      field('Is Active',  profileData.interview.is_active);
+      field('Archived',   profileData.interview.archived);
+      lines.push('');
+
+      lines.push('[ PATIENT — IDENTITY ]');
+      hr2();
+      field('ID',            profileData.patient.id);
+      field('Name',          profileData.patient.name);
+      field('Age',           profileData.patient.age);
+      field('Gender',        profileData.patient.gender);
+      field('Ethnicity',     profileData.patient.ethnicity);
+      field('Marital Status',profileData.patient.marital_status);
+      field('Education',     profileData.patient.education);
+      field('Occupation',    profileData.patient.occupation);
+      field('PSI Patient',   profileData.patient.patient_psi);
+      field('Created At',    profileData.patient.created_at);
+      lines.push('');
+
+      lines.push('[ PATIENT — CLINICAL PROFILE ]');
+      hr2();
+      field('Disorder',      profileData.patient.disorder);
+      field('Type',          profileData.patient.type);
+      field('Base Emotions', profileData.patient.base_emotions);
+      lines.push('\nINTAKE:');
+      lines.push(profileData.patient.intake || '—');
+      lines.push('');
+
+      lines.push('[ PATIENT — COGNITIVE MODEL ]');
+      hr2();
+      field('Helpless Beliefs',    profileData.patient.helpless_beliefs);
+      field('Unlovable Beliefs',   profileData.patient.unlovable_beliefs);
+      field('Worthless Beliefs',   profileData.patient.worthless_beliefs);
+      lines.push('\nINTERMEDIATE BELIEF:');
+      lines.push(profileData.patient.intermediate_belief || '—');
+      lines.push('\nTRIGGER:');
+      lines.push(profileData.patient.trigger || '—');
+      lines.push('\nAUTOMATIC THOUGHTS:');
+      lines.push(profileData.patient.auto_thoughts || '—');
+      lines.push('\nCOPING STRATEGIES:');
+      lines.push(profileData.patient.coping_strategies || '—');
+      lines.push('\nBEHAVIOR:');
+      lines.push(profileData.patient.behavior || '—');
+      lines.push('');
+
+      lines.push('[ PATIENT — BACKGROUND & HISTORY ]');
+      hr2();
+      lines.push('\nCHILDHOOD HISTORY:');
+      lines.push(profileData.patient.childhood_history || '—');
+      lines.push('\nEDUCATION HISTORY:');
+      lines.push(profileData.patient.education_history || '—');
+      lines.push('\nOCCUPATION HISTORY:');
+      lines.push(profileData.patient.occupation_history || '—');
+      lines.push('\nRELATIONSHIP HISTORY:');
+      lines.push(profileData.patient.relationship_history || '—');
+      lines.push('\nMEDICAL HISTORY:');
+      lines.push(profileData.patient.medical_history || '—');
+      lines.push('\nPERSONAL HISTORY:');
+      lines.push(profileData.patient.personal_history || '—');
+      lines.push('\nSESSION HISTORY:');
+      lines.push(profileData.patient.session_history || '—');
+      lines.push('\nFAMILY TREE:');
+      lines.push(profileData.patient.family_tree || '—');
+      lines.push('\nTIMELINE:');
+      lines.push(profileData.patient.timeline || '—');
+      lines.push('');
+
+      lines.push('[ PATIENT — NARRATIVE ]');
+      hr2();
+      lines.push('\nVIGNETTE:');
+      lines.push(profileData.patient.vignette || '—');
+      lines.push('\nPROFILE SUMMARY:');
+      lines.push(profileData.patient.profile_summary || '—');
+      lines.push('');
+
+      lines.push('[ INTERVIEW STATE ]');
+      hr2();
+      field('State ID',        profileData.state.id);
+      field('Turn Count',      profileData.state.turn_count);
+      field('Summary Freq',    profileData.state.summary_freq);
+      field('Summary Turn',    profileData.state.summary_turn);
+      lines.push('\nSUMMARY:');
+      lines.push(profileData.state.summary || '—');
+      lines.push('\nNOTES:');
+      lines.push(profileData.state.notes || '—');
+      lines.push('\nPATIENT SUMMARY:');
+      lines.push(profileData.state.patient_summary || '—');
+      lines.push('\nPATIENT FEELINGS:');
+      lines.push(profileData.state.patient_feelings || '—');
+      lines.push('\nPATIENT BEHAVIOR:');
+      lines.push(profileData.state.patient_behavior || '—');
+      lines.push('');
+      hr();
+
+      content = lines.join('\n');
+      mime    = 'text/plain';
+      ext     = 'txt';
+    }
+
+    const blob = new Blob([content], { type: mime });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `${filename}.${ext}`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    // Close modal
+    bootstrap.Modal.getInstance(document.getElementById('downloadModal'))?.hide();
+  }
+
   window.addEventListener('DOMContentLoaded', function () {
     const interviewId = {{ interview.id }};
     const sessionKey  = `new_session_${interviewId}`;

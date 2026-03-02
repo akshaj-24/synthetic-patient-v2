@@ -1,11 +1,31 @@
 import random
 import faker
+import time
 
 fake = faker.Faker()
 
 
-def generateField(field, dependencies):
-    
+def generateField(field, dependencies, settings=None):
+    """
+    Generate a single patient profile field.
+
+    Args:
+        field:        Name of the field to generate.
+        dependencies: Dict of already-filled field values this field may depend on.
+        settings:     Optional NewSessionSettings model instance.
+                      Use it to read model/temperature for LLM calls.
+    """
+    print(f"[generateField] field={field!r}  "
+          f"settings=(model={getattr(settings, 'model', None)!r}, "
+          f"temperature={getattr(settings, 'temperature', None)!r})")
+
+    # Example usage of settings when making an LLM call:
+    # model       = settings.model       if settings else 'qwen3:32b'
+    # temperature = settings.temperature if settings else 1.0
+    # response = ollama_client.chat(model=model, options={'temperature': temperature}, ...)
+
+    time.sleep(0.5)
+
     match field:
         case 'age':
             return randomAge()
