@@ -47,8 +47,7 @@ def generate_field(request):
     deps         = data.get('dependencies', {})
     instructions = data.get('instructions', '')
     ns_settings  = CHANGE_SETTINGS.get_new_session_settings(request.user)
-    # return JsonResponse({'value': autogenerate_profile.generateField(field, deps, settings=ns_settings)})
-    return JsonResponse({'value': "INSTRUCTIONS " + instructions})
+    return JsonResponse({'value': autogenerate_profile.generateField(field, deps, instructions, settings=ns_settings)})
 
 
 @login_required(login_url='login')

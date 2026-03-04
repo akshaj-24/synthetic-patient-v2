@@ -5,7 +5,7 @@ import time
 fake = faker.Faker()
 
 
-def generateField(field, dependencies, settings=None):
+def generateField(field, dependencies, instructions, settings=None):
     """
     Generate a single patient profile field.
 
@@ -80,7 +80,7 @@ def generateField(field, dependencies, settings=None):
             return "No prior sessions with this patient."
         
         case __:
-            return "Error autogenerating field"
+            return f"Not yet implemented {field}, INSTRUCTIONS: {instructions}"
 
 
 
