@@ -1,5 +1,6 @@
 from ...models import Interview, Patient, Message, ChatSettings, InterviewState as State
-
+from langfuse import observe, get_client
+langfuse = get_client()
 # Prompt imports
 
 
@@ -7,6 +8,7 @@ from ...models import Interview, Patient, Message, ChatSettings, InterviewState 
 # LLM response import
 from .. import LLM_CALL as LLM
 
+@observe()
 def response(interview_id, question):
     
     interview = Interview.objects.get(id=interview_id)
@@ -23,6 +25,7 @@ def response(interview_id, question):
     user_input = question["content"]
     user_tone = question["tone"]
     
+    langfuse.update_current_trace() # TODO see how to put ids
     
     # Get content from LLM
     resp = f"test response for '{user_input}' with tone '{user_tone}'"
