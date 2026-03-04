@@ -1,9 +1,14 @@
-URL = "http://localhost:11434/v1"
+BASE_URL = "http://localhost:11434/v1"
 
-MODEL = "qwen3:32b"
+API_KEY = "ollama"
 
-PATIENT = {
-    "temperature": 0.7,
+PATIENT_SUMMARY = {
+    "temperature": 0.2,
+    "num_ctx": 16384,
+}
+
+INTERVIEW_SUMMARY = {
+    "temperature": 0.2,
     "num_ctx": 16384,
 }
 
@@ -12,12 +17,12 @@ SUMMARY = {
     "num_ctx": 16384,
 }
 
-GENERATION = {
-    "temperature": 1.0,
+FEELINGS = {
+    "temperature": 0.2,
     "num_ctx": 16384,
 }
 
-INTERVIEWER = {
-    "temperature": 0.3,
+INTERVIEWER_NOTES = {
+    "temperature": 0.2,
     "num_ctx": 16384,
 }

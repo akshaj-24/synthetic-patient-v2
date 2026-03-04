@@ -349,7 +349,7 @@ async function saveNotes() {
     });
     if (res.ok) {
       notesStatus.textContent = 'Changes saved';
-      notesStatus.style.color = '#198754';
+      notesStatus.style.color = '#1ea767ff';
     }
   } catch (e) {
     notesStatus.textContent = 'Save failed';

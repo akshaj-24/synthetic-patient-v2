@@ -10,6 +10,7 @@ from . import autogenerate_profile
 from . import autogenerate_state
 # TODO REFACTOR FOR autogenerate.py
 
+from .OllamaLLM.Patient import response as patient_response
 
 # ==============================================================================
 # 1. LLM CALLS
@@ -17,9 +18,8 @@ from . import autogenerate_state
 
 def getResponsePatient(interview, user_input, tone='neutral'):
     """Generate the patient's reply. Replace dummy logic with LLM call."""
-    # TODO: build context, call LLM, update state vars
-    time.sleep(2)  # Simulates LLM latency
-    return f"[Patient response placeholder — tone: {tone}]"
+    return patient_response.response(interview.id,
+                                     {"content": user_input, "tone": tone})
 
 
 def process_settings(interview, settings: dict) -> dict:
@@ -359,6 +359,7 @@ def download_transcript(request, interview_id):
                     'role':      m.role,
                     'content':   m.content,
                     'tone':      m.tone or '',
+                    'behavior':  m.behavior or '',
                     'timestamp': m.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
                 }
                 for m in messages
@@ -382,7 +383,8 @@ def download_transcript(request, interview_id):
         ]
         for m in messages:
             tone_suffix = f"  [{m.tone}]" if m.tone else ""
-            lines.append(f"{m.role}{tone_suffix}: {m.content}")
+            behavior_suffix = f"  [Behavior: {m.behavior}]" if m.behavior else ""
+            lines.append(f"{m.role}{tone_suffix}{behavior_suffix}: {m.content}")
             lines.append('')
         response = HttpResponse('\n'.join(lines), content_type='text/plain; charset=utf-8')
         filename = f"transcript_{interview.id}.txt"
@@ -431,22 +433,24 @@ def send_message(request, interview_id):
     user_input = request.POST.get('message', '').strip()
     tone       = request.POST.get('tone', 'neutral')
     if not user_input:
-        return JsonResponse({'error': 'Empty message'}, status=400)
-
-    # Persist user message (store tone so it appears in transcripts)
-    interview.messages.create(role='user', content=user_input, tone=tone)
+        return JsonResponse({'error': 'Empty message'}, status=400)    
 
     # Get patient response (LLM call — replace dummy logic here)
     reply = getResponsePatient(interview, user_input, tone)
+    
+    # Persist user message (store tone so it appears in transcripts)
+    interview.messages.create(role='user', content=user_input, tone=tone)
 
     # Persist patient reply
-    interview.messages.create(role='patient', content=reply)
+    interview.messages.create(role='patient', content=reply.get("content", "Error generating response"), tone=reply.get("tone", 'neutral'), behavior=reply.get("behavior", ''))
 
     state = interview.state
     state.turn_count += 1
     state.save(update_fields=['turn_count'])
 
-    return JsonResponse({'response': reply})
+    display = f"{reply.get('content', '')}\n[Tone: {reply.get('tone', 'neutral')}]\n[Behavior: {reply.get('behavior', '')}]"
+
+    return JsonResponse({'response': display})
 
 
 @login_required(login_url='login')
