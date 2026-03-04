@@ -1,4 +1,3 @@
-conda deactivate
 cd ~
 cd synthetic-patient-v2
 source .venv/bin/activate

@@ -124,6 +124,7 @@ class Message(models.Model):
     content    = models.TextField()
     timestamp  = models.DateTimeField(auto_now_add=True)
     tone       = models.TextField(blank=True)  # e.g., 'neutral', 'empathetic', 'hostile and angry staring at wall'
+    behavior   = models.TextField(blank=True)  # e.g., 'calm and cooperative', 'pacing and agitated', 'tearfully recounting trauma'
 
     def __str__(self):
         return f"#{self.id} — {self.role} message in Interview #{self.interview.id} createdAT {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"

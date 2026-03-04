@@ -75,11 +75,13 @@ async function generateField(fieldId, dependencies) {
     const depValues = {};
     dependencies.forEach(dep => depValues[dep] = document.getElementById(dep).value);
 
+    const instructions = el.value.trim();
+
     try {
         const res = await fetch(`/chat/generate/field/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-            body: JSON.stringify({ field: fieldId, dependencies: depValues })
+            body: JSON.stringify({ field: fieldId, dependencies: depValues, instructions })
         });
         const data = await res.json();
         if (el.tagName === 'SELECT') {

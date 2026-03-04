@@ -256,8 +256,10 @@ def generate_field(request):
     data  = json.loads(request.body)
     field = data.get('field', '')
     deps  = data.get('dependencies', {})
+    instructions = data.get('instructions', '')
     ns_settings = CHANGE_SETTINGS.get_new_session_settings(request.user)
-    return JsonResponse({'value': autogenerate_profile.generateField(field, deps, settings=ns_settings)})
+    # return JsonResponse({'value': autogenerate_profile.generateField(field, deps, settings=ns_settings)})
+    return JsonResponse({'value': "INSTRUCTIONS " + instructions})
 
 
 
