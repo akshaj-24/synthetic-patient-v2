@@ -11,6 +11,74 @@ from . import autogenerate_state
 # TODO REFACTOR FOR autogenerate.py
 
 
+# ==============================================================================
+# 1. LLM CALLS
+# ==============================================================================
+
+def getResponsePatient(interview, user_input, tone='neutral'):
+    """Generate the patient's reply. Replace dummy logic with LLM call."""
+    # TODO: build context, call LLM, update state vars
+    time.sleep(2)  # Simulates LLM latency
+    return f"[Patient response placeholder — tone: {tone}]"
+
+
+def process_settings(interview, settings: dict) -> dict:
+    """Save settings to the ChatSettings model for this interview."""
+    return CHANGE_SETTINGS.save_chat_settings(interview, settings)
+
+
+@login_required(login_url='login')
+def autogenerate_question(request, interview_id):
+    """Generate a suggested interviewer question. Replace dummy logic with LLM call."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    get_object_or_404(Interview, id=interview_id, createdBy=request.user)
+    # TODO: build context from interview history and call LLM
+    time.sleep(3)
+    return JsonResponse({'question': 'SAMPLE QUESTION'})
+
+
+@login_required(login_url='login')
+def generate_field(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    data         = json.loads(request.body)
+    field        = data.get('field', '')
+    deps         = data.get('dependencies', {})
+    instructions = data.get('instructions', '')
+    ns_settings  = CHANGE_SETTINGS.get_new_session_settings(request.user)
+    # return JsonResponse({'value': autogenerate_profile.generateField(field, deps, settings=ns_settings)})
+    return JsonResponse({'value': "INSTRUCTIONS " + instructions})
+
+
+@login_required(login_url='login')
+def populate_state(request, interview_id):
+    """Dummy endpoint: populates InterviewState fields one by one with 1s delay each.
+    Streams JSON events so the frontend can update fields as they arrive."""
+    import django.http
+    interview = get_object_or_404(Interview, id=interview_id, createdBy=request.user)
+    state     = getattr(interview, 'state', None)
+    if not state:
+        return JsonResponse({'error': 'No state found'}, status=404)
+
+    fields        = ['summary', 'notes', 'patient_summary', 'patient_feelings', 'patient_behavior']
+    chat_settings = CHANGE_SETTINGS.get_chat_settings(interview)
+
+    def stream():
+        for field in fields:
+            resp = autogenerate_state.response(field, state, settings=chat_settings)
+            setattr(state, field, resp)
+            state.save(update_fields=[field])
+            yield f"data: {json.dumps({'field': field, 'value': resp})}\n\n"
+        yield 'data: {"done": true}\n\n'
+
+    return django.http.StreamingHttpResponse(stream(), content_type='text/event-stream')
+
+
+# ==============================================================================
+# 2. OTHER NEW SESSION RELATED
+# ==============================================================================
+
 @login_required(login_url='login')
 def default_settings(request):
     """GET: return current generation settings. POST: update them."""
@@ -24,6 +92,76 @@ def default_settings(request):
     ns = CHANGE_SETTINGS.get_new_session_settings(request.user)
     return JsonResponse(CHANGE_SETTINGS.new_session_settings_as_dict(ns))
 
+
+@login_required(login_url='login')
+def patient_list(request):
+    """Returns all patients as JSON — supports my_patients and psi filters"""
+    only_mine = request.GET.get('mine') == '1'
+    only_psi  = request.GET.get('psi')  == '1'
+    qs = Patient.objects.all()
+    if only_mine:
+        qs = qs.filter(createdBy=request.user)
+    if only_psi:
+        qs = qs.filter(patient_psi=True)
+    qs = qs.order_by('-createdAt')
+    data = [{
+        'id':              p.id,
+        'name':            p.name            or '',
+        'age':             p.age             or '',
+        'gender':          p.gender          or '',
+        'disorder':        p.disorder        or '',
+        'profile_summary': p.profile_summary or '',
+        'patient_psi':     p.patient_psi,
+        'is_mine':         p.createdBy == request.user,
+        'createdBy':       p.createdBy.username if p.createdBy else '—',
+        'createdAt':       p.createdAt.strftime('%Y-%m-%d') if p.createdAt else '',
+    } for p in qs]
+    return JsonResponse({'patients': data})
+
+
+@login_required(login_url='login')
+def patient_detail(request, patient_id):
+    p = get_object_or_404(Patient, id=patient_id)
+    return JsonResponse({
+        'id':                   p.id,
+        'name':                 p.name,
+        'age':                  p.age,
+        'gender':               p.gender,
+        'ethnicity':            p.ethnicity,
+        'marital_status':       p.marital_status,
+        'education':            p.education,
+        'occupation':           p.occupation,
+        'disorder':             p.disorder,
+        'type':                 p.type,
+        'base_emotions':        p.base_emotions,
+        'childhood_history':    p.childhood_history,
+        'education_history':    p.education_history,
+        'occupation_history':   p.occupation_history,
+        'relationship_history': p.relationship_history,
+        'medical_history':      p.medical_history,
+        'personal_history':     p.personal_history,
+        'session_history':      p.session_history,
+        'helpless_beliefs':     p.helpless_beliefs,
+        'unlovable_beliefs':    p.unlovable_beliefs,
+        'worthless_beliefs':    p.worthless_beliefs,
+        'intermediate_belief':  p.intermediate_belief,
+        'coping_strategies':    p.coping_strategies,
+        'trigger':              p.trigger,
+        'auto_thoughts':        p.auto_thoughts,
+        'behavior':             p.behavior,
+        'intake':               p.intake,
+        'vignette':             p.vignette,
+        'family_tree':          p.family_tree,
+        'timeline':             p.timeline,
+        'createdBy':            p.createdBy.username if p.createdBy else '—',
+        'createdAt':            p.createdAt.strftime('%Y-%m-%d') if p.createdAt else '',
+        'patient_psi':          p.patient_psi,
+    })
+
+
+# ==============================================================================
+# 3. CREATE SESSION
+# ==============================================================================
 
 @login_required(login_url='login')
 def new_interview(request):
@@ -110,224 +248,10 @@ def new_interview_from_patient(request):
 
     return JsonResponse({'redirect': f'/chat/load/{interview.id}/?new=1'})
 
-@login_required(login_url='login')
-def load_interview(request, interview_id):
-    interview = get_object_or_404(Interview, id=interview_id)
-    patient   = interview.patient
-    state     = getattr(interview, 'state', None)
-    is_new    = request.GET.get('new') == '1'
-    return render(request, 'chat/load_interview.html', {
-        'interview': interview,
-        'patient':   patient,
-        'state':     state,
-        'is_new':    is_new,
-    })
 
-# INTERVIEW_STATE_GENERATE
-@login_required(login_url='login')
-def populate_state(request, interview_id):
-    """Dummy endpoint: populates InterviewState fields one by one with 1s delay each.
-    Streams JSON events so the frontend can update fields as they arrive."""
-    import django.http
-    interview = get_object_or_404(Interview, id=interview_id, createdBy=request.user)
-    state     = getattr(interview, 'state', None)
-    if not state:
-        return JsonResponse({'error': 'No state found'}, status=404)
-
-    fields = ['summary', 'notes', 'patient_summary', 'patient_feelings', 'patient_behavior']
-    chat_settings = CHANGE_SETTINGS.get_chat_settings(interview)
-
-    def stream():
-        for field in fields:
-            resp = autogenerate_state.response(field, state, settings=chat_settings)
-            setattr(state, field, resp)
-            state.save(update_fields=[field])
-            yield f"data: {json.dumps({'field': field, 'value': resp})}\n\n"
-        yield 'data: {"done": true}\n\n'
-
-    return django.http.StreamingHttpResponse(stream(), content_type='text/event-stream')
-
-
-@login_required(login_url='login')
-def chat_view(request, interview_id):
-    interview = get_object_or_404(Interview, id=interview_id, createdBy=request.user)
-    messages  = interview.messages.all()
-    interview.is_active = True
-    interview.save()
-    chat_settings = CHANGE_SETTINGS.get_chat_settings(interview)
-    return render(request, 'chat/chat.html', {
-        'interview':      interview,
-        'messages':       messages,
-        'chat_settings':  chat_settings,
-    })
-
-
-@login_required(login_url='login')
-def send_message(request, interview_id):
-    if request.method != 'POST':
-        return JsonResponse({'error': 'POST required'}, status=405)
-    interview  = get_object_or_404(Interview, id=interview_id, createdBy=request.user)
-    user_input = request.POST.get('message', '').strip()
-    tone       = request.POST.get('tone', 'neutral')
-    if not user_input:
-        return JsonResponse({'error': 'Empty message'}, status=400)
-
-    # Persist user message (store tone so it appears in transcripts)
-    interview.messages.create(role='user', content=user_input, tone=tone)
-
-    # Get patient response (LLM call — replace dummy logic here)
-    reply = getResponsePatient(interview, user_input, tone)
-
-    # Persist patient reply (tone belongs to the interviewer, not the patient)
-    interview.messages.create(role='patient', content=reply)
-
-    state = interview.state
-    state.turn_count += 1
-    state.save(update_fields=['turn_count'])
-
-    return JsonResponse({'response': reply})
-
-
-def getResponsePatient(interview, user_input, tone='neutral'):
-    """Generate the patient's reply. Replace dummy logic with LLM call."""
-    # TODO: build context, call LLM, update state vars
-    time.sleep(2)  # Simulates LLM latency
-    return f"[Patient response placeholder — tone: {tone}]"
-
-
-@login_required(login_url='login')
-def update_settings(request, interview_id):
-    """Save chat generation settings for this interview.
-
-    Payload: { "temperature": float, "model": str, ...any future keys }
-    All processing is delegated to process_settings() so you can extend it
-    in a separate module without touching this view.
-    """
-    if request.method != 'POST':
-        return JsonResponse({'error': 'POST required'}, status=405)
-    interview = get_object_or_404(Interview, id=interview_id, createdBy=request.user)
-    data = json.loads(request.body)
-    result = process_settings(interview, data)
-    return JsonResponse({'ok': True, **result})
-
-
-def process_settings(interview, settings: dict) -> dict:
-    """Save settings to the ChatSettings model for this interview."""
-    return CHANGE_SETTINGS.save_chat_settings(interview, settings)
-
-
-@login_required(login_url='login')
-def autogenerate_question(request, interview_id):
-    """Generate a suggested interviewer question. Replace dummy logic with LLM call."""
-    if request.method != 'POST':
-        return JsonResponse({'error': 'POST required'}, status=405)
-    get_object_or_404(Interview, id=interview_id, createdBy=request.user)
-    # TODO: build context from interview history and call LLM
-    time.sleep(3)
-    return JsonResponse({'question': 'SAMPLE QUESTION'})
-
-
-@login_required(login_url='login')
-def save_notes(request, interview_id):
-    """Auto-save interviewer notes."""
-    if request.method != 'POST':
-        return JsonResponse({'error': 'POST required'}, status=405)
-    interview   = get_object_or_404(Interview, id=interview_id, createdBy=request.user)
-    data        = json.loads(request.body)
-    notes       = data.get('notes', '')
-    interviewer = interview.interviewer
-    interviewer.notes = notes
-    interviewer.save(update_fields=['notes'])
-    return JsonResponse({'ok': True})
-
-
-@login_required(login_url='login')
-def end_interview(request, interview_id):
-    interview = get_object_or_404(Interview, id=interview_id, createdBy=request.user)
-    interview.is_active = False
-    interview.save()
-    return redirect('load_user')
-
-
-@login_required(login_url='login')
-def generate_field(request):
-    if request.method != 'POST':
-        return JsonResponse({'error': 'POST required'}, status=405)
-    data  = json.loads(request.body)
-    field = data.get('field', '')
-    deps  = data.get('dependencies', {})
-    instructions = data.get('instructions', '')
-    ns_settings = CHANGE_SETTINGS.get_new_session_settings(request.user)
-    # return JsonResponse({'value': autogenerate_profile.generateField(field, deps, settings=ns_settings)})
-    return JsonResponse({'value': "INSTRUCTIONS " + instructions})
-
-
-
-@login_required(login_url='login')
-def patient_list(request):
-    """Returns all patients as JSON — supports my_patients and psi filters"""
-    only_mine = request.GET.get('mine') == '1'
-    only_psi  = request.GET.get('psi')  == '1'
-    qs = Patient.objects.all()
-    if only_mine:
-        qs = qs.filter(createdBy=request.user)
-    if only_psi:
-        qs = qs.filter(patient_psi=True)
-    qs = qs.order_by('-createdAt')
-    data = [{
-        'id':          p.id,
-        'name':        p.name        or '',
-        'age':         p.age         or '',
-        'gender':      p.gender      or '',
-        'disorder':    p.disorder    or '',
-        'profile_summary': p.profile_summary or '',
-        'patient_psi': p.patient_psi,
-        'is_mine':     p.createdBy == request.user,
-        'createdBy':   p.createdBy.username if p.createdBy else '—',
-        'createdAt':   p.createdAt.strftime('%Y-%m-%d') if p.createdAt else '',
-    } for p in qs]
-    return JsonResponse({'patients': data})
-
-
-@login_required(login_url='login')
-def patient_detail(request, patient_id):
-    p = get_object_or_404(Patient, id=patient_id)
-    return JsonResponse({
-        'id':                   p.id,
-        'name':                 p.name,
-        'age':                  p.age,
-        'gender':               p.gender,
-        'ethnicity':            p.ethnicity,
-        'marital_status':       p.marital_status,
-        'education':            p.education,
-        'occupation':           p.occupation,
-        'disorder':             p.disorder,
-        'type':                 p.type,
-        'base_emotions':        p.base_emotions,
-        'childhood_history':    p.childhood_history,
-        'education_history':    p.education_history,
-        'occupation_history':   p.occupation_history,
-        'relationship_history': p.relationship_history,
-        'medical_history':      p.medical_history,
-        'personal_history':     p.personal_history,
-        'session_history':      p.session_history,
-        'helpless_beliefs':     p.helpless_beliefs,
-        'unlovable_beliefs':    p.unlovable_beliefs,
-        'worthless_beliefs':    p.worthless_beliefs,
-        'intermediate_belief':  p.intermediate_belief,
-        'coping_strategies':    p.coping_strategies,
-        'trigger':              p.trigger,
-        'auto_thoughts':        p.auto_thoughts,
-        'behavior':             p.behavior,
-        'intake':               p.intake,
-        'vignette':             p.vignette,
-        'family_tree':          p.family_tree,
-        'timeline':             p.timeline,
-        'createdBy':            p.createdBy.username if p.createdBy else '—',
-        'createdAt':            p.createdAt.strftime('%Y-%m-%d') if p.createdAt else '',
-        'patient_psi':          p.patient_psi,
-    })
-
+# ==============================================================================
+# 4. LIST SESSIONS
+# ==============================================================================
 
 @login_required(login_url='login')
 def load_list(request):
@@ -337,7 +261,7 @@ def load_list(request):
 @login_required(login_url='login')
 def interview_list_api(request):
     """Returns interviews as JSON with filters"""
-    only_mine    = request.GET.get('mine') == '1'
+    only_mine     = request.GET.get('mine')     == '1'
     show_archived = request.GET.get('archived') == '1'
 
     qs = Interview.objects.select_related('patient', 'createdBy', 'state')
@@ -387,7 +311,7 @@ def archive_interview(request, interview_id):
     interview = get_object_or_404(Interview, id=interview_id)
     if interview.createdBy != request.user and not request.user.is_superuser:
         return JsonResponse({'error': 'Permission denied'}, status=403)
-    interview.archived = not interview.archived   # toggle
+    interview.archived = not interview.archived  # toggle
     interview.save()
     return JsonResponse({'archived': interview.archived})
 
@@ -400,9 +324,7 @@ def delete_interview(request, interview_id):
     if interview.createdBy != request.user and not request.user.is_superuser:
         return JsonResponse({'error': 'Permission denied'}, status=403)
     patient = interview.patient
-    # Delete the interview (cascades to Messages, InterviewState, Interviewer)
     interview.delete()
-    # Only delete the patient if it exists and is NOT a PSI dataset patient
     if patient and not patient.patient_psi:
         patient.delete()
     return JsonResponse({'deleted': True})
@@ -420,13 +342,13 @@ def download_transcript(request, interview_id):
     state     = getattr(interview, 'state', None)
 
     meta = {
-        'id':         interview.id,
-        'title':      interview.title or f'Interview #{interview.id}',
-        'user':       interview.createdBy.username if interview.createdBy else '—',
-        'createdAt':  interview.createdAt.strftime('%Y-%m-%d %H:%M:%S'),
-        'turns':      getattr(state, 'turn_count', 0),
-        'patient':    interview.patient.name if interview.patient else '—',
-        'disorder':   interview.patient.disorder if interview.patient else '—',
+        'id':        interview.id,
+        'title':     interview.title or f'Interview #{interview.id}',
+        'user':      interview.createdBy.username if interview.createdBy else '—',
+        'createdAt': interview.createdAt.strftime('%Y-%m-%d %H:%M:%S'),
+        'turns':     getattr(state, 'turn_count', 0),
+        'patient':   interview.patient.name if interview.patient else '—',
+        'disorder':  interview.patient.disorder if interview.patient else '—',
     }
 
     if fmt == 'json':
@@ -468,3 +390,94 @@ def download_transcript(request, interview_id):
 
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+# ==============================================================================
+# 5. CHAT
+# ==============================================================================
+
+@login_required(login_url='login')
+def load_interview(request, interview_id):
+    interview = get_object_or_404(Interview, id=interview_id)
+    patient   = interview.patient
+    state     = getattr(interview, 'state', None)
+    is_new    = request.GET.get('new') == '1'
+    return render(request, 'chat/load_interview.html', {
+        'interview': interview,
+        'patient':   patient,
+        'state':     state,
+        'is_new':    is_new,
+    })
+
+
+@login_required(login_url='login')
+def chat_view(request, interview_id):
+    interview = get_object_or_404(Interview, id=interview_id, createdBy=request.user)
+    messages  = interview.messages.all()
+    interview.is_active = True
+    interview.save()
+    chat_settings = CHANGE_SETTINGS.get_chat_settings(interview)
+    return render(request, 'chat/chat.html', {
+        'interview':     interview,
+        'messages':      messages,
+        'chat_settings': chat_settings,
+    })
+
+
+@login_required(login_url='login')
+def send_message(request, interview_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    interview  = get_object_or_404(Interview, id=interview_id, createdBy=request.user)
+    user_input = request.POST.get('message', '').strip()
+    tone       = request.POST.get('tone', 'neutral')
+    if not user_input:
+        return JsonResponse({'error': 'Empty message'}, status=400)
+
+    # Persist user message (store tone so it appears in transcripts)
+    interview.messages.create(role='user', content=user_input, tone=tone)
+
+    # Get patient response (LLM call — replace dummy logic here)
+    reply = getResponsePatient(interview, user_input, tone)
+
+    # Persist patient reply
+    interview.messages.create(role='patient', content=reply)
+
+    state = interview.state
+    state.turn_count += 1
+    state.save(update_fields=['turn_count'])
+
+    return JsonResponse({'response': reply})
+
+
+@login_required(login_url='login')
+def update_settings(request, interview_id):
+    """Save chat generation settings for this interview."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    interview = get_object_or_404(Interview, id=interview_id, createdBy=request.user)
+    data      = json.loads(request.body)
+    result    = process_settings(interview, data)
+    return JsonResponse({'ok': True, **result})
+
+
+@login_required(login_url='login')
+def save_notes(request, interview_id):
+    """Auto-save interviewer notes."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    interview   = get_object_or_404(Interview, id=interview_id, createdBy=request.user)
+    data        = json.loads(request.body)
+    notes       = data.get('notes', '')
+    interviewer = interview.interviewer
+    interviewer.notes = notes
+    interviewer.save(update_fields=['notes'])
+    return JsonResponse({'ok': True})
+
+
+@login_required(login_url='login')
+def end_interview(request, interview_id):
+    interview = get_object_or_404(Interview, id=interview_id, createdBy=request.user)
+    interview.is_active = False
+    interview.save()
+    return redirect('load_user')
