@@ -18,7 +18,7 @@ SUMMARY = {
 }
 
 FEELINGS = {
-    "temperature": 0.2,
+    "temperature": 0.9,
     "num_ctx": 16384,
 }
 

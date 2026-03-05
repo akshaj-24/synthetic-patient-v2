@@ -3,33 +3,94 @@ from langfuse.openai import OpenAI
 from dotenv import load_dotenv
 from . import SETTINGS as OLLAMA_SETTINGS
 from . import DEFAULT_SETTINGS
-
-
+from django.contrib.auth.models import User as username
+from django.conf import settings
+from . import schemas as MODELS
+import json
+from pydantic import ValidationError
+import concurrent.futures
+from . import tools as TOOLS
+        
 load_dotenv()
 langfuse = get_client()
 
 client = OpenAI(base_url=OLLAMA_SETTINGS.BASE_URL, api_key=OLLAMA_SETTINGS.API_KEY)
 
 
-def call(id, metadata, metadata_fields, sys, user, settings):
+def call(id: str, interview, sys, user, settings = None, metadata: list = None, metadata_fields: list = None, tools:bool=False):
     
+    if settings is None:
+        settings = getSettings(interview, id)
     
+    schema = getSchema(id)
+    schema_class = getSchemaClass(id)
     
-    resp = client.chat.completions.create(
-        model=settings["model"],
-        messages=[
+    meta_dict = dict(zip(metadata_fields, metadata)) if (metadata and metadata_fields) else {}
+    
+    messages=[
             {"role": "system", "content": sys},
             {"role": "user", "content": user},
-        ],
-        temperature=settings["temperature"],
-        max_tokens=settings["max_tokens"],
-        #response_format= #TODO,
+        ]
+    
+    callArgs = {
+        "model": settings["model"],
+        "messages": messages,
+        "temperature": settings["temperature"],
+        "max_tokens": settings["max_tokens"],
+        "response_format": schema,
+        "langfuse_metadata": {"call_id": id, **meta_dict},
+    }
+    
+    if tools:
+        callArgs["tools"] = TOOLS.TOOL_LIST
+        callArgs["tool_choice"] = "auto"
         
-    )
+    for _ in range(3):
+        resp = client.chat.completions.create(**callArgs)
+        msg = resp.choices[0].message
+        
+        if not tools or not msg.tool_calls:
+            break  # Exit loop if no tools or tool calls    
     
+        callArgs["messages"].append(msg)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = {
+                executor.submit(execute_tool, tc.function.name, tc.function.arguments, interview, id): tc
+                for tc in msg.tool_calls
+            }
+            for future, tc in futures.items():
+                callArgs["messages"].append({
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": str(future.result()),
+                })
+                
+    raw = msg.content
     
-    
-    
+    if schema_class:
+        try:
+            return schema_class.model_validate_json(raw)  # Returns validated Pydantic object
+        except ValidationError as e:
+            
+            langfuse.update_current_observation(
+                level="WARNING",
+                status_message=str(e),
+                metadata={"retry": True, "call_id": id}
+            )
+            
+            with open("llm_validation_errors.txt", "a") as f:
+                f.write("ValidationError:\n")
+                f.write(str(e))
+                f.write("\nRaw response:\n")
+                f.write(str(raw))
+                f.write("\n---\n")
+            
+            if metadata and metadata_fields:
+                   return call(id, interview, sys, user, metadata=metadata, metadata_fields=metadata_fields)
+               
+            return call(id, interview, sys, user)  # Retry without metadata
+            
+    return raw
     
 # ------------------- HELPERS ----------------------
     
@@ -44,9 +105,6 @@ IDS = {
     "interviewer": "Use for interviewer autogen question",
     "interviewer_summary": "Use for interviewer summary",
 }
-
-def setID(id: str):
-    return 1
 
 def getSettings(interview, id):
     
@@ -85,4 +143,42 @@ def getSettings(interview, id):
         "temperature": temperature,
         "model": model,
         "max_tokens": DEFAULT_SETTINGS.NUM_CTX,
-    }   
+    }
+    
+def getSchema(id):
+    return MODELS.getSchema(id)
+
+def getSchemaClass(id):
+    return MODELS.SCHEMA_MAP.get(id, None)
+
+def execute_tool(tool_name, tool_args, interview, id):
+    # args = json.loads(tool_args)
+    patient = interview.patient
+    field_map = {
+            "get_childhood_history":    patient.childhood_history,
+            "get_education_history":    patient.education_history,
+            "get_occupation_history":   patient.occupation_history,
+            "get_relationship_history": patient.relationship_history,
+            "get_medical_history":      patient.medical_history,
+            "get_personal_history":     patient.personal_history,
+            "get_session_history":      patient.session_history,
+        }
+    result = field_map.get(tool_name)
+
+    if result is None:
+        langfuse.update_current_observation(
+            level="WARNING",
+            status_message=f"Tool not found: {tool_name}",
+            metadata={"tool_name": tool_name, "call_id": id}
+        )
+        return "__TOOL__ERROR__"
+
+    if not result.strip():
+        langfuse.update_current_observation(
+            level="WARNING",
+            status_message=f"Tool returned empty: {tool_name}",
+            metadata={"tool_name": tool_name, "call_id": id}
+        )
+        return "__TOOL__ERROR__"
+
+    return result

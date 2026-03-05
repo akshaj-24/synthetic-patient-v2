@@ -16,11 +16,10 @@ from .OllamaLLM.Patient import response as patient_response
 # 1. LLM CALLS
 # ==============================================================================
 
-def getResponsePatient(interview, user_input, tone='neutral'):
+def getResponsePatient(interview, user_input, tone='neutral', user_id=None):
     """Generate the patient's reply. Replace dummy logic with LLM call."""
     return patient_response.response(interview.id,
-                                     {"content": user_input, "tone": tone})
-
+                                     {"content": user_input, "tone": tone}, user_id=user_id)
 
 def process_settings(interview, settings: dict) -> dict:
     """Save settings to the ChatSettings model for this interview."""
@@ -436,7 +435,7 @@ def send_message(request, interview_id):
         return JsonResponse({'error': 'Empty message'}, status=400)    
 
     # Get patient response (LLM call — replace dummy logic here)
-    reply = getResponsePatient(interview, user_input, tone)
+    reply = getResponsePatient(interview, user_input, tone, request.user.id)
     
     # Persist user message (store tone so it appears in transcripts)
     interview.messages.create(role='user', content=user_input, tone=tone)

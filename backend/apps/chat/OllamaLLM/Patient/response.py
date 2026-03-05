@@ -9,7 +9,7 @@ langfuse = get_client()
 from .. import LLM_CALL as LLM
 
 @observe()
-def response(interview_id, question):
+def response(interview_id, question, user_id=None):
     
     interview = Interview.objects.get(id=interview_id)
     patient = interview.patient
@@ -25,10 +25,41 @@ def response(interview_id, question):
     user_input = question["content"]
     user_tone = question["tone"]
     
-    langfuse.update_current_trace() # TODO see how to put ids
+    patient_metadata = {
+        #TODO: FIll this
+    }
+    
+    langfuse.update_current_trace(
+        user_id=str(user_id),
+        session_id=str(interview_id),
+        tags=["patient_response", "patient"],
+        metadata=patient_metadata)
+    
+    #Build metadata and fields list
+    content_metadata = ["Test", "Test 2", "Test 3"]
+    content_metadata_fields = ["field1", "field2", "field3"]
+    
+    sys = langfuse.get_prompt("patient_content_sys", version="latest")
+    prompt_vars = {
+        # TODO: fill as per prompt
+    }
+    sys = sys.compile(**prompt_vars)
+        
+    user = langfuse.get_prompt("patient_content_user", version="latest")
+    prompt_vars_user = {
+        # TODO: fill as per prompt
+    }
+    user = user.compile(**prompt_vars_user)
     
     # Get content from LLM
-    resp = f"test response for '{user_input}' with tone '{user_tone}'"
+    resp = LLM.call(id="patient_content", 
+                    interview=interview, 
+                    sys=sys,
+                    user=user,
+                    settings=None,
+                    metadata=content_metadata,
+                    metadata_fields=content_metadata_fields,
+                    )
     # Add or remove stuff
     
     # Get tone to convey
