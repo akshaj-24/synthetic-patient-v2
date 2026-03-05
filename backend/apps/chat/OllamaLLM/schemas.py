@@ -3,6 +3,9 @@ from typing import Optional
 
 # --- Define your schemas ---
 
+# TODO: Combine tone and behavior into a single schema with subfields? Or keep separate for clarity?
+
+
 class PatientContentResponse(BaseModel):
     content: str = Field(description="The patient's spoken response")
 
@@ -17,9 +20,7 @@ class PatientFeelingsResponse(BaseModel):
     intensity: int = Field(description="Intensity from 1-10")
 
 class PatientGraderResponse(BaseModel):
-    content_valid: bool
-    feelings_valid: bool
-    feedback: Optional[str] = None
+    content: str = Field(description="Grader's updated content response after judging")
 
 class PatientSummaryResponse(BaseModel):
     summary: str
