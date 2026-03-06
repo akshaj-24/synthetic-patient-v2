@@ -201,6 +201,52 @@
     ::-webkit-scrollbar-thumb { background: #dee2e6; border-radius: 3px; }
     /* Darker scrollbar inside notes textarea */
     .notes-panel textarea::-webkit-scrollbar-thumb { background: #868e96; }
+
+    /* ── Star rating ── */
+    .msg-ts-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 3px;
+      padding: 0 4px;
+    }
+    .msg-ts-row .msg-ts {
+      margin-top: 0;
+      padding: 0;
+    }
+    .star-rating {
+      display: flex;
+      align-items: center;
+      gap: 0px;
+      user-select: none;
+      margin-left: 6px;
+    }
+    .star-rating .star-half-wrap {
+      position: relative;
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+    .star-rating .star-half-wrap .star-full {
+      font-size: 18px;
+      color: #adb5bd;
+      transition: color .1s;
+      line-height: 1;
+    }
+    .star-rating .star-half-wrap.filled .star-full,
+    .star-rating .star-half-wrap.half-filled .star-full   { color: #ffc107; }
+    .star-rating .star-half-wrap.half-filled .star-full   {
+      background: linear-gradient(to right, #ffc107 50%, #dee2e6 50%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .star-rating-value {
+      font-size: 0.68rem;
+      color: #adb5bd;
+      margin-left: 2px;
+    }
   </style>
 </head>
 <body>
@@ -254,9 +300,17 @@
         <div class="msg-row msg-{{ msg.role }}">
           <div>
             <div class="msg-bubble">{{ msg.content }}</div>
-            <div class="msg-ts {% if msg.role == 'user' %}text-end{% endif %}">
-              {{ msg.timestamp|time:"H:i" }}
+            {% if msg.role == 'patient' %}
+            <div class="msg-ts-row">
+              <span class="msg-ts">{{ msg.timestamp|time:"H:i" }}</span>
+              <div class="star-rating" data-msg-id="{{ msg.id }}" data-rating="{% if msg.rating %}{{ msg.rating_stars }}{% endif %}">
+                {% for i in '12345' %}<span class="star-half-wrap" data-pos="{{ i }}"><span class="star-full">&#9733;</span></span>{% endfor %}
+                <span class="star-rating-value"></span>
+              </div>
             </div>
+            {% else %}
+            <div class="msg-ts {% if msg.role == 'user' %}text-end{% endif %}">{{ msg.timestamp|time:"H:i" }}</div>
+            {% endif %}
           </div>
         </div>
       {% empty %}

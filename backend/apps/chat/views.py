@@ -20,7 +20,8 @@ def getResponsePatient(interview, user_input, tone='neutral', user_id=None):
     """Generate the patient's reply. Replace dummy logic with LLM call."""
     return patient_response.response(interview.id,
                                      {"content": user_input, "tone": tone}, user_id=user_id)
-
+    
+    
 def process_settings(interview, settings: dict) -> dict:
     """Save settings to the ChatSettings model for this interview."""
     return CHANGE_SETTINGS.save_chat_settings(interview, settings)
@@ -437,19 +438,13 @@ def send_message(request, interview_id):
     # Get patient response (LLM call — replace dummy logic here)
     reply = getResponsePatient(interview, user_input, tone, request.user.id)
     
-    # Persist user message (store tone so it appears in transcripts)
-    interview.messages.create(role='user', content=user_input, tone=tone)
-
-    # Persist patient reply
-    interview.messages.create(role='patient', content=reply.get("content", "Error generating response"), tone=reply.get("tone", 'neutral'), behavior=reply.get("behavior", ''))
+    display = f"{reply.get('content', '')}\n[Tone: {reply.get('tone', 'neutral')}]\n[Behavior: {reply.get('behavior', '')}]"
 
     state = interview.state
     state.turn_count += 1
     state.save(update_fields=['turn_count'])
 
-    display = f"{reply.get('content', '')}\n[Tone: {reply.get('tone', 'neutral')}]\n[Behavior: {reply.get('behavior', '')}]"
-
-    return JsonResponse({'response': display})
+    return JsonResponse({'response': display, 'message_id': reply["id"]})
 
 
 @login_required(login_url='login')
@@ -475,6 +470,33 @@ def save_notes(request, interview_id):
     interviewer.notes = notes
     interviewer.save(update_fields=['notes'])
     return JsonResponse({'ok': True})
+
+
+@login_required(login_url='login')
+def rate_message(request, interview_id, message_id):
+    """Save a star rating (0–5, 0.5 increments) for a patient message."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    get_object_or_404(Interview, id=interview_id, createdBy=request.user)
+    from .models import Message
+    message = get_object_or_404(Message, id=message_id, interview_id=interview_id, role='patient')
+    data   = json.loads(request.body)
+    rating = data.get('rating')  # None means clear; otherwise 0–5 in 0.5 steps from UI
+    if rating is None:
+        message.rating = None
+    else:
+        try:
+            rating = float(rating)
+        except (TypeError, ValueError):
+            return JsonResponse({'error': 'Invalid rating'}, status=400)
+        # Round to nearest 0.5 star and clamp 0–5, then convert to 0–1 for storage
+        rating = round(round(rating * 2) / 2, 1)
+        rating = max(0.0, min(5.0, rating))
+        message.rating = round(rating / 5, 2)
+    message.save(update_fields=['rating'])
+    # Return the 0–5 display value back to JS
+    display_rating = round(float(message.rating) * 5, 1) if message.rating is not None else None
+    return JsonResponse({'ok': True, 'rating': display_rating})
 
 
 @login_required(login_url='login')

@@ -58,7 +58,7 @@ function handleKey(e) {
 }
 
 /* ── Append a message bubble ── */
-function appendBubble(role, content, ts, dateLabel) {
+function appendBubble(role, content, ts, dateLabel, msgId) {
   const empty = document.getElementById('emptyState');
   if (empty) empty.remove();
 
@@ -70,16 +70,37 @@ function appendBubble(role, content, ts, dateLabel) {
     ? `<div class="text-center my-2"><span style="font-size:.7rem;color:#adb5bd;background:#f8f9fa;padding:2px 10px;border-radius:20px;">${dateLabel}</span></div>`
     : '';
 
+  const tsRow = (role === 'patient' && msgId)
+    ? `<div class="msg-ts-row">
+        <span class="msg-ts">${timeStr}</span>
+        <div class="star-rating" data-msg-id="${msgId}" data-rating="">
+          <span class="star-half-wrap" data-pos="1"><span class="star-full">&#9733;</span></span>
+          <span class="star-half-wrap" data-pos="2"><span class="star-full">&#9733;</span></span>
+          <span class="star-half-wrap" data-pos="3"><span class="star-full">&#9733;</span></span>
+          <span class="star-half-wrap" data-pos="4"><span class="star-full">&#9733;</span></span>
+          <span class="star-half-wrap" data-pos="5"><span class="star-full">&#9733;</span></span>
+          <span class="star-rating-value"></span>
+        </div>
+      </div>`
+    : `<div class="msg-ts ${align}">${timeStr}</div>`;
+
   const html = `${dateSep}
     <div class="msg-row msg-${role}">
       <div>
         <div class="msg-bubble">${escHtml(content)}</div>
-        <div class="msg-ts ${align}">${timeStr}</div>
+        ${tsRow}
       </div>
     </div>`;
 
   const indicator = document.getElementById('typingIndicator');
   indicator.insertAdjacentHTML('beforebegin', html);
+
+  // Bind events to the newly inserted widget
+  if (role === 'patient' && msgId) {
+    const widgets = document.querySelectorAll(`.star-rating[data-msg-id="${msgId}"]`);
+    widgets.forEach(w => initStarWidget(w));
+  }
+
   scrollBottom();
 }
 
@@ -190,7 +211,7 @@ async function sendMessage() {
       return;
     }
 
-    appendBubble('patient', data.response);
+    appendBubble('patient', data.response, null, null, data.message_id);
 
     const autoGenToggle = document.getElementById('autoGenToggle');
     if (autoGenToggle && autoGenToggle.checked) {
@@ -356,3 +377,74 @@ async function saveNotes() {
     notesStatus.style.color = '#dc3545';
   }
 }
+
+/* ── Star rating ── */
+function renderStars(widget, rating) {
+  const stars = widget.querySelectorAll('.star-half-wrap');
+  const label = widget.querySelector('.star-rating-value');
+  stars.forEach((star, i) => {
+    const pos = i + 1;
+    star.classList.remove('filled', 'half-filled');
+    if (rating === null || rating === '') {
+      // no-op — all grey
+    } else if (rating >= pos) {
+      star.classList.add('filled');
+    } else if (rating >= pos - 0.5) {
+      star.classList.add('half-filled');
+    }
+  });
+  if (label) {
+    label.textContent = (rating !== null && rating !== '') ? `${rating}★` : '';
+  }
+}
+
+function initStarWidget(widget) {
+  const rawRating = widget.dataset.rating;
+  const initial   = rawRating !== '' && rawRating !== undefined ? parseFloat(rawRating) : null;
+  renderStars(widget, initial);
+
+  const stars  = widget.querySelectorAll('.star-half-wrap');
+  const msgId  = widget.dataset.msgId;
+
+  stars.forEach(star => {
+    star.addEventListener('mousemove', e => {
+      const pos    = parseInt(star.dataset.pos);
+      const rect   = star.getBoundingClientRect();
+      const isLeft = (e.clientX - rect.left) < rect.width / 2;
+      const hover  = isLeft ? pos - 0.5 : pos;
+      renderStars(widget, hover);
+    });
+
+    star.addEventListener('mouseleave', () => {
+      const saved = widget.dataset.rating;
+      renderStars(widget, saved !== '' && saved !== undefined ? parseFloat(saved) : null);
+    });
+
+    star.addEventListener('click', async e => {
+      const pos    = parseInt(star.dataset.pos);
+      const rect   = star.getBoundingClientRect();
+      const isLeft = (e.clientX - rect.left) < rect.width / 2;
+      let   newRating = isLeft ? pos - 0.5 : pos;
+
+      // Clicking the same value again sets to 0 (allows clearing via re-click)
+      const current = widget.dataset.rating !== '' ? parseFloat(widget.dataset.rating) : null;
+      if (current === newRating) newRating = 0;
+
+      widget.dataset.rating = newRating;
+      renderStars(widget, newRating);
+
+      try {
+        await fetch(`/chat/${INTERVIEW_ID}/rate/${msgId}/`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+          body:    JSON.stringify({ rating: newRating }),
+        });
+      } catch (err) {
+        console.warn('Rating save failed', err);
+      }
+    });
+  });
+}
+
+/* Initialise all star widgets already in the DOM (server-rendered messages) */
+document.querySelectorAll('.star-rating').forEach(w => initStarWidget(w));

@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "apps.accounts",
     "apps.chat",
-    "chat.apps.LangfuseInit",  # Ensure Langfuse is initialized on startup
 ]
 
 MIDDLEWARE = [

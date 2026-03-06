@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 from django.conf import settings
 
@@ -125,6 +126,14 @@ class Message(models.Model):
     timestamp  = models.DateTimeField(auto_now_add=True)
     tone       = models.TextField(blank=True)  # e.g., 'neutral', 'empathetic', 'hostile and angry staring at wall'
     behavior   = models.TextField(blank=True)  # e.g., 'calm and cooperative', 'pacing and agitated', 'tearfully recounting trauma'
+    rating     = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0), MaxValueValidator(1)])  # Optional rating stored as 0–1 (UI shows 0–5 stars; divide by 5 to convert)
+
+    @property
+    def rating_stars(self):
+        """Return rating on 0–5 scale for display (stored as 0–1)."""
+        if self.rating is None:
+            return None
+        return round(float(self.rating) * 5, 1)
 
     def __str__(self):
         return f"#{self.id} — {self.role} message in Interview #{self.interview.id} createdAT {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"

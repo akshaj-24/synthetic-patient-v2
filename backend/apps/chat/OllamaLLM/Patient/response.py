@@ -34,104 +34,124 @@ def response(interview_id, question, user_id=None):
     updateMetadata(user_id, interview_id, all_vars)
 
     # TODO Reduce number of LLM calls
+    
+    # TODO Build prompts in langfuse
 
     # Get feelings based on interviewers question and tone
-    sys, user = compilePrompt("patient_feelings", all_vars)
-    pf_resp = LLM.call(id="patient_feelings",
-                        interview=interview, 
-                        sys=sys,
-                        user=user,
-                        settings=None,
-                        metadata=None,
-                        metadata_fields=None,
-                        tools=True,
-                    )
+    # sys, user = compilePrompt("patient_feelings", all_vars)
+    # pf_resp = LLM.call(id="patient_feelings",
+    #                     interview=interview, 
+    #                     sys=sys,
+    #                     user=user,
+    #                     settings=None,
+    #                     metadata=None,
+    #                     metadata_fields=None,
+    #                     tools=True,
+    #                 )
     
-    state.patient_feelings = pf_resp.feelings
-    state.save(update_fields=['patient_feelings'])
+    # state.patient_feelings = pf_resp.feelings
+    # state.save(update_fields=['patient_feelings'])
     
-    all_vars["patient_feelings"] = pf_resp.feelings
+    # all_vars["patient_feelings"] = pf_resp.feelings
     
-    # Get resp content 
-    sys, user = compilePrompt("patient_content", all_vars)
-    pc_resp = LLM.call(id="patient_content", 
-                    interview=interview, 
-                    sys=sys,
-                    user=user,
-                    settings=None,
-                    metadata=None,
-                    metadata_fields=None,
-                    tools=True,
-                    )
+    # # Get resp content 
+    # sys, user = compilePrompt("patient_content", all_vars)
+    # pc_resp = LLM.call(id="patient_content", 
+    #                 interview=interview, 
+    #                 sys=sys,
+    #                 user=user,
+    #                 settings=None,
+    #                 metadata=None,
+    #                 metadata_fields=None,
+    #                 tools=True,
+    #                 )
     
-    all_vars["resp_content"] = pc_resp.content
-    
-    
-    # Get patients tone to response with
-    sys, user = compilePrompt("patient_tone", all_vars)
-    tone_resp = LLM.call(id="patient_tone", 
-                    interview=interview, 
-                    sys=sys,
-                    user=user,
-                    settings=None,
-                    metadata=None,
-                    metadata_fields=None,
-                    tools=True,
-                    )
-    
-    all_vars["resp_tone"] = tone_resp.content
-    tone = tone_resp.content
+    # all_vars["resp_content"] = pc_resp.content
     
     
-    # Get patient behavior to response with
-    sys, user = compilePrompt("patient_behavior", all_vars)
-    behavior_resp = LLM.call(id="patient_behavior",
-                    interview=interview, 
-                    sys=sys,
-                    user=user,
-                    settings=None,
-                    metadata=None,
-                    metadata_fields=None,
-                    tools=True,
-                    )
+    # # Get patients tone to response with
+    # sys, user = compilePrompt("patient_tone", all_vars)
+    # tone_resp = LLM.call(id="patient_tone", 
+    #                 interview=interview, 
+    #                 sys=sys,
+    #                 user=user,
+    #                 settings=None,
+    #                 metadata=None,
+    #                 metadata_fields=None,
+    #                 tools=True,
+    #                 )
     
-    behavior = behavior_resp.behavior
-    all_vars["resp_behavior"] = behavior_resp.behavior
+    # all_vars["resp_tone"] = tone_resp.tone
+    # tone = tone_resp.tone
     
-    # Rewrite response as patient, incorporating content, tone, behavior, and feelings
-    sys, user = compilePrompt("patient_writer", all_vars)
-    resp_final = LLM.call(id="patient_writer",
-                    interview=interview, 
-                    sys=sys,
-                    user=user,
-                    settings=None,
-                    metadata=None,
-                    metadata_fields=None,
-                    tools=True,
-                    )
     
-    all_vars["resp_final"] = resp_final.content
+    # # Get patient behavior to response with
+    # sys, user = compilePrompt("patient_behavior", all_vars)
+    # behavior_resp = LLM.call(id="patient_behavior",
+    #                 interview=interview, 
+    #                 sys=sys,
+    #                 user=user,
+    #                 settings=None,
+    #                 metadata=None,
+    #                 metadata_fields=None,
+    #                 tools=True,
+    #                 )
     
-    # Judge and change if needed, or pass through if good
-    sys, user = compilePrompt("patient_grader", all_vars)
-    grader_resp = LLM.call(id="patient_grader",
-                    interview=interview, 
-                    sys=sys,
-                    user=user,
-                    settings=None,
-                    metadata=None,
-                    metadata_fields=None,
-                    tools=True,
-                    )
+    # behavior = behavior_resp.behavior
+    # all_vars["resp_behavior"] = behavior_resp.behavior
     
-    all_vars["resp_grader"] = grader_resp.content
-    resp = grader_resp.content
+    # # Rewrite response as patient, incorporating content, tone, behavior, and feelings
+    # sys, user = compilePrompt("patient_writer", all_vars)
+    # resp_final = LLM.call(id="patient_writer",
+    #                 interview=interview, 
+    #                 sys=sys,
+    #                 user=user,
+    #                 settings=None,
+    #                 metadata=None,
+    #                 metadata_fields=None,
+    #                 tools=True,
+    #                 )
+    
+    # all_vars["resp_final"] = resp_final.content
+    
+    # # Judge and change if needed, or pass through if good
+    # sys, user = compilePrompt("patient_grader", all_vars)
+    # grader_resp = LLM.call(id="patient_grader",
+    #                 interview=interview, 
+    #                 sys=sys,
+    #                 user=user,
+    #                 settings=None,
+    #                 metadata=None,
+    #                 metadata_fields=None,
+    #                 tools=True,
+    #                 )
+    
+    # all_vars["resp_grader"] = grader_resp.content
+    # resp = grader_resp.content
+    
+    # response = {
+    #     "content": resp,
+    #     "tone": tone,
+    #     "behavior": behavior,
+    #     "id": None,
+    # }
+    
+    resp = "Test reply"
+    tone = "Neutral"
+    behavior = "Test"
     
     response = {
-        "content": resp,
-        "tone": tone,
-        "behavior": behavior,
+        "content": "Test Reply",
+        "tone": "Neutral",
+        "behavior": "Test",
+        "id": None,
     }
+    
+    # Persist user message (store tone so it appears in transcripts)
+    interview.messages.create(role='user', content=user_input, tone=tone)
+
+    # Persist patient reply
+    patient_msg = interview.messages.create(role='patient', content=resp, tone=tone, behavior=behavior)
     
     state.turn_count += 1
     state.save(update_fields=['turn_count'])
@@ -141,10 +161,13 @@ def response(interview_id, question, user_id=None):
             "response_tone":     tone,
             "response_behavior": behavior,
             "response_turn":     state.turn_count,
-            "response_length":   len(resp.content) if resp else 0,
+            "response_length":   len(resp) if resp else 0,
+            "message_id": patient_msg.id,
         }
     )
     
+    response["id"] = patient_msg.id
+
     return response
 
 
@@ -155,12 +178,12 @@ def checkAndUpdateSummary(interview):
         state.summary_turn = state.turn_count
         state.save(update_fields=['summary_turn'])
         
-        #TODO
+        #TODO add llm calls
         updated_summary = f"Updated summary based on conversation so far: {getLastNTurnsString(interview)}"  # Placeholder for actual summary logic
         state.summary = state.summary + "\n" + updated_summary
         state.save(update_fields=['summary'])
         
-        #TODO
+        #TODO add llm calls
         updated_patient_summary = f"Updated summary based on conversation so far: {getLastNTurnsString(interview)}"  # Placeholder for actual summary logic
         state.patient_summary = state.patient_summary + "\n" + updated_patient_summary
         state.save(update_fields=['patient_summary'])

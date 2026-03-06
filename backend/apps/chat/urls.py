@@ -22,6 +22,7 @@ urlpatterns = [
     path('<int:interview_id>/archive/',      views.archive_interview,        name='archive_interview'),
     path('<int:interview_id>/delete/',       views.delete_interview,         name='delete_interview'),
     path('<int:interview_id>/download/',     views.download_transcript,      name='download_transcript'),
+    path('<int:interview_id>/rate/<int:message_id>/', views.rate_message, name='rate_message'),
 
     # Generation
     path('generate/field/',                  views.generate_field,           name='generate_field'),
