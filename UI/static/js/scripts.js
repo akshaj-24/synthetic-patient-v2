@@ -127,6 +127,47 @@ let onlyPsi          = false;
 
 let patientModal, profileModal;
 
+// ══════════ FORM VALIDATION ══════════
+const REQUIRED_FIELDS = [
+    'age', 'gender', 'name', 'ethnicity', 'marital_status', 'education', 'occupation',
+    'disorder', 'type', 'base_emotions', 'intake',
+    'helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs',
+    'intermediate_belief', 'trigger', 'auto_thoughts', 'coping_strategies', 'behavior',
+    'childhood_history', 'education_history', 'occupation_history',
+    'relationship_history', 'medical_history', 'personal_history',
+    'family_tree', 'timeline', 'vignette',
+];
+
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('newSessionForm');
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            let firstInvalid = null;
+            REQUIRED_FIELDS.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (!el.value.trim()) {
+                    el.classList.add('is-invalid-dep');
+                    if (!firstInvalid) firstInvalid = el;
+                } else {
+                    el.classList.remove('is-invalid-dep');
+                }
+            });
+            if (firstInvalid) {
+                e.preventDefault();
+                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstInvalid.focus();
+            }
+        });
+
+        // Clear invalid highlight on input
+        REQUIRED_FIELDS.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', () => el.classList.remove('is-invalid-dep'));
+        });
+    }
+});
+
 // ══════════ INIT ON DOM READY ══════════
 document.addEventListener('DOMContentLoaded', function () {
     patientModal = new bootstrap.Modal(document.getElementById('patientModal'));
