@@ -58,7 +58,7 @@ function handleKey(e) {
 }
 
 /* ── Append a message bubble ── */
-function appendBubble(role, content, ts, dateLabel, msgId) {
+function appendBubble(role, content, ts, dateLabel, msgId, tone=null, behavior=null) {
   const empty = document.getElementById('emptyState');
   if (empty) empty.remove();
 
@@ -69,6 +69,17 @@ function appendBubble(role, content, ts, dateLabel, msgId) {
   const dateSep = dateLabel
     ? `<div class="text-center my-2"><span style="font-size:.7rem;color:#adb5bd;background:#f8f9fa;padding:2px 10px;border-radius:20px;">${dateLabel}</span></div>`
     : '';
+
+  const capTone = tone ? tone.charAt(0).toUpperCase() + tone.slice(1) : null;
+
+  const toneBehavior = role === 'patient'
+    ? `<div style="font-size:0.88rem; margin-top:6px; color:#6c757d;">
+         <div>Tone: ${capTone || '—'}</div>
+         ${behavior ? `<div>Behavior: ${behavior}</div>` : ''}
+       </div>`
+    : (role === 'user' && tone)
+      ? `<div style="font-size:0.88rem; margin-top:6px; color:rgba(255,255,255,0.6);">Tone: ${capTone}</div>`
+      : '';
 
   const tsRow = (role === 'patient' && msgId)
     ? `<div class="msg-ts-row">
@@ -87,7 +98,7 @@ function appendBubble(role, content, ts, dateLabel, msgId) {
   const html = `${dateSep}
     <div class="msg-row msg-${role}">
       <div>
-        <div class="msg-bubble">${escHtml(content)}</div>
+        <div class="msg-bubble">${escHtml(content)}${toneBehavior}</div>
         ${tsRow}
       </div>
     </div>`;
@@ -103,6 +114,7 @@ function appendBubble(role, content, ts, dateLabel, msgId) {
 
   scrollBottom();
 }
+
 
 function escHtml(str) {
   return str
@@ -187,7 +199,7 @@ async function sendMessage() {
   const tone    = document.getElementById('toneSelect').value;
   const sendBtn = document.getElementById('sendBtn');
 
-  appendBubble('user', content);
+  appendBubble('user', content, null, null, null, tone);
   msgInput.value = '';
   msgInput.style.height = 'auto';
   sendBtn.disabled = true;
@@ -211,7 +223,7 @@ async function sendMessage() {
       return;
     }
 
-    appendBubble('patient', data.response, null, null, data.message_id);
+    appendBubble('patient', data.response, null, null, data.message_id, data.tone, data.behavior);
 
     const autoGenToggle = document.getElementById('autoGenToggle');
     if (autoGenToggle && autoGenToggle.checked) {

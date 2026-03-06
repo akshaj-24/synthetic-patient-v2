@@ -162,7 +162,7 @@ def response(interview_id, question, user_id=None):
             "response_behavior": behavior,
             "response_turn":     state.turn_count,
             "response_length":   len(resp) if resp else 0,
-            "message_id": patient_msg.id,
+            "message_id":        patient_msg.id,
         }
     )
     

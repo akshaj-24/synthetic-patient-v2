@@ -437,14 +437,12 @@ def send_message(request, interview_id):
 
     # Get patient response (LLM call — replace dummy logic here)
     reply = getResponsePatient(interview, user_input, tone, request.user.id)
-    
-    display = f"{reply.get('content', '')}\n[Tone: {reply.get('tone', 'neutral')}]\n[Behavior: {reply.get('behavior', '')}]"
 
     state = interview.state
     state.turn_count += 1
     state.save(update_fields=['turn_count'])
 
-    return JsonResponse({'response': display, 'message_id': reply["id"]})
+    return JsonResponse({'response': reply.get('content', ''), 'message_id': reply["id"], 'tone': reply.get('tone', 'neutral'), 'behavior': reply.get('behavior', '')})
 
 
 @login_required(login_url='login')
