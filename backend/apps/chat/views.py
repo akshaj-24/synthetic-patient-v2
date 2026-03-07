@@ -436,7 +436,7 @@ def send_message(request, interview_id):
         return JsonResponse({'error': 'Empty message'}, status=400)    
 
     # Get patient response (LLM call — replace dummy logic here)
-    reply = getResponsePatient(interview, user_input, tone, request.user.id)
+    reply = getResponsePatient(interview, user_input, tone, request.user.username)
 
     state = interview.state
     state.turn_count += 1
