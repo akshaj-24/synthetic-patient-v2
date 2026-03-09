@@ -68,7 +68,6 @@ def generateField(field, dependencies, instructions, request=None, settings=None
         case 'worthless_beliefs':
             return randomWorthlessBeliefs()
         
-        
         case 'intermediate_belief':
             args = dependencies
             args["user_instructions"] = instructions
@@ -78,9 +77,6 @@ def generateField(field, dependencies, instructions, request=None, settings=None
             user = user.compile(**args)
             return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=request.user.id, metadata=args, tools=False).content
 
-        
-        
-        
         case 'trigger':
             #TODO LLM CALL
             return "1"
