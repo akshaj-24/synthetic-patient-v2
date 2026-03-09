@@ -1,11 +1,23 @@
 import random
 import faker
 import time
+import json
+import os
+from langfuse import get_client, observe
+from dotenv import load_dotenv
+from .OllamaLLM import LLM_CALL as LLM
+
+load_dotenv()
+langfuse = get_client()
 
 fake = faker.Faker()
 
+_PSI_PATH = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'PSI_analysis', 'PSI_CM_data.json')
+with open(_PSI_PATH, "r") as f:
+    _PSI_PATIENTS = json.load(f)
 
-def generateField(field, dependencies, instructions, settings=None):
+
+def generateField(field, dependencies, instructions, request=None, settings=None):
     """
     Generate a single patient profile field.
 
@@ -24,61 +36,106 @@ def generateField(field, dependencies, instructions, settings=None):
     # temperature = settings.temperature if settings else 1.0
     # response = ollama_client.chat(model=model, options={'temperature': temperature}, ...)
 
-    time.sleep(0.5)
-
     match field:
         case 'age':
             return randomAge()
-        
         case 'gender':
             return randomGender()
-        
         case 'ethnicity':
             return randomEthnicity()
-        
         case 'name':
             gender = dependencies.get('gender')
             return randomName(gender)
-        
         case 'marital_status':
             age = dependencies.get('age')
             return randomMaritalStatus(age)
-        
         case 'education':
             age = dependencies.get('age')
             return randomEducation(int(age))
-        
         case 'occupation':
             edu = dependencies.get('education')
             return randomOccupation(edu)
-        
         case 'disorder':
             return randomDisorder()
+        case 'type':
+            return randomPatientType()
+        case 'base_emotions':
+            return randomPsiEmotions()
+        case 'helpless_beliefs':
+            return randomHelplessBeliefs()
+        case 'unlovable_beliefs':
+            return randomUnlovableBeliefs()
+        case 'worthless_beliefs':
+            return randomWorthlessBeliefs()
         
+        
+        case 'intermediate_belief':
+            args = dependencies
+            args["user_instructions"] = instructions
+            sys = langfuse.get_prompt("autogenerate/intermediate_beliefs_sys", label="production")
+            sys = sys.compile()
+            user = langfuse.get_prompt("autogenerate/intermediate_beliefs_user", label="production")
+            user = user.compile(**args)
+            return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=request.user.id, metadata=args, tools=False).content
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
         
         
+        
+        case 'trigger':
+            #TODO LLM CALL
+            return "1"
+        case 'auto_thoughts':
+            #TODO LLM CALL
+            return "1"
+        case 'coping_strategies':
+            #TODO LLM CALL
+            return "1"
+        case 'behavior':
+            #TODO LLM CALL
+            return "1"
+        case 'intake':
+            # TODO LLM CALL
+            return "1"
+        
+        case 'childhood_history':
+            # TODO LLM CALL
+            return "1"
+        
+        case 'education_history':
+            #TODO LLM
+            return "1"
+        
+        case 'occupation_history':
+            #TODO LLM
+            return "1"
+        
+        case 'relationship_history':
+            #TODO LLM
+            return "1"
+        
+        case 'medical_history':
+            #TODO LLM
+            return "1"
+        
+        case 'personal_history':
+            #TODO LLM
+            return "1"
+        
+        case 'family_tree':
+            #TODO LLM
+            return "1"
+        
+        case 'timeline':
+            #TODO LLM
+            return "1"
+        
+        case "vignette":
+            # TODO LLM
+            return "1"
         
         case 'session_history':
-            
             # IMPLEMENT IF FORM HAS TEXT INPUT FOR SESSION HISTORY THEN USE CALL LLM 
-            return "No prior sessions with this patient."
-        
+            return "No prior sessions with this patient."  
         case __:
             return f"Not yet implemented {field}, INSTRUCTIONS: {instructions}"
 
@@ -482,10 +539,117 @@ def randomDisorder():
     return random.choice(['Major Depressive Disorder (MDD)', 'Generalized Anxiety Disorder (GAD)', 'Paranoid Personality Disorder (PPD)'])
 
 
+PATIENT_TYPE_CATEGORIES = {
+    # How open/forthcoming the patient is
+    "openness": [
+        "Open",
+        "Guarded",
+        "Defensive",
+        "Evasive",
+        "Selective",
+        "Overly Disclosing",
+    ],
+    # Emotional expression style
+    "affect": [
+        "Flat Affect",
+        "Emotionally Expressive",
+        "Labile",
+        "Blunted Affect",
+        "Constricted Affect",
+        "Euphoric",
+        "Dysphoric",
+    ],
+    # Attitude toward the clinician
+    "engagement": [
+        "Cooperative",
+        "Resistant",
+        "Passive",
+        "Hostile",
+        "Ambivalent",
+        "Eager to Please",
+        "Demanding",
+        "Withdrawn",
+    ],
+    # Awareness of their condition
+    "insight": [
+        "Good Insight",
+        "Limited Insight",
+        "No Insight",
+        "Partial Insight",
+        "Intellectualised Insight",   # understands cognitively but not emotionally
+    ],
+    # Communication / presentation style
+    "presentation": [
+        "Dramatic",
+        "Stoic",
+        "Somatic",
+        "Intellectualizing",
+        "Tangential",
+        "Circumstantial",
+        "Concrete",
+        "Verbose",
+        "Monosyllabic",
+    ],
+    # Attitude toward help / treatment
+    "motivation": [
+        "Help-Seeking",
+        "Help-Rejecting",
+        "Ambivalent about Treatment",
+        "Externally Motivated",       # e.g. sent by family / court
+        "Intrinsically Motivated",
+    ],
+    # Trust in the clinician / system
+    "trust": [
+        "Trusting",
+        "Suspicious",
+        "Paranoid",
+        "Mistrustful of System",
+        "Overly Trusting",
+    ],
+}
+
+OPTIONAL_CATEGORIES = {"presentation", "trust"}
 
 
+def randomPatientType() -> str:
+    """
+    Returns a comma-separated string of patient type attributes,
+    one sampled per category. Optional categories have a 40% chance
+    of being excluded to add natural variety.
+    """
+    selected = []
+    for category, options in PATIENT_TYPE_CATEGORIES.items():
+        if category in OPTIONAL_CATEGORIES and random.random() < 0.4:
+            continue
+        selected.append(random.choice(options))
+    return ", ".join(selected)
 
 
+def randomPsiEmotions():
+    patient = random.choice(_PSI_PATIENTS)
+    
+    # Split comma-separated emotion strings into individual tags
+    emotions = []
+    for emotion_str in patient.get("emotion", []):
+        emotions += [e.strip() for e in emotion_str.split(",")]
+          
+    return ", ".join(emotions)  
+    
+def randomHelplessBeliefs():
+    patient = random.choice(_PSI_PATIENTS)
+    
+    beliefs = patient.get("helpless_belief", [])
+    print(beliefs)
+    return ", ".join(beliefs) if beliefs else "No helpless beliefs in patient"
 
+def randomUnlovableBeliefs():
+    patient = random.choice(_PSI_PATIENTS)
+    
+    beliefs = patient.get("unlovable_belief", [])
+    return ", ".join(beliefs) if beliefs else "No unlovable beliefs in patient"
 
-
+def randomWorthlessBeliefs():
+    patient = random.choice(_PSI_PATIENTS)
+    
+    beliefs = patient.get("worthless_belief", [])
+    return ", ".join(beliefs) if beliefs else "No worthless beliefs in patient"

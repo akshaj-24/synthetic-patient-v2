@@ -37,6 +37,8 @@ def response(interview_id, question, user_id=None):
     
     # TODO Build prompts in langfuse
 
+    # TODO Refactor LLM calls
+
     # Get feelings based on interviewers question and tone
     # sys, user = compilePrompt("patient_feelings", all_vars)
     # pf_resp = LLM.call(id="patient_feelings",

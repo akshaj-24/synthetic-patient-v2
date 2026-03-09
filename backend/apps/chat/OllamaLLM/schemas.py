@@ -29,15 +29,11 @@ class InterviewerSummaryResponse(BaseModel):
     summary: str
 
 class AutogenerateResponse(BaseModel):
-    name: str
-    age: int
-    background: str
-    presenting_problem: str
-    personality_traits: list[str]
+    content: str
 
 class InterviewerQuestionResponse(BaseModel):
     question: str
-    rationale: Optional[str] = None
+    tone: str
 
 SCHEMA_MAP = {
     "patient_content": PatientContentResponse,

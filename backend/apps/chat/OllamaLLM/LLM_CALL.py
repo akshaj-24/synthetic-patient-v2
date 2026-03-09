@@ -10,22 +10,30 @@ import json
 from pydantic import ValidationError
 import concurrent.futures
 from . import tools as TOOLS
+from .. import models
         
 load_dotenv()
 langfuse = get_client()
 
 client = OpenAI(base_url=OLLAMA_SETTINGS.BASE_URL, api_key=OLLAMA_SETTINGS.API_KEY)
 
-
-def call(id: str, interview, sys, user, settings = None, metadata: list = None, metadata_fields: list = None, tools:bool=False):
+@observe()
+def call(id: str, sys, user, settings = None, interview_id = None, user_id = None, metadata: dict = None, tools:bool=False):
     
     if settings is None:
-        settings = getSettings(interview, id)
+        if interview_id is None and user_id is None:
+            raise ValueError(f"Either 'user_id' or 'interview_id' must be provided for call id '{id}' when not passing settings")
+        
+        if id != "autogenerate" and interview_id is not None:
+            settings = getSettings(id, interview_id=interview_id)
+            
+        elif id=="autogenerate" and user_id is not None:
+            settings = getSettings(id, user_id=user_id)
     
     schema = getSchema(id)
     schema_class = getSchemaClass(id)
-    
-    meta_dict = dict(zip(metadata_fields, metadata)) if (metadata and metadata_fields) else {}
+
+    langfuse.update_current_trace(metadata=metadata)
     
     messages=[
             {"role": "system", "content": sys},
@@ -38,7 +46,7 @@ def call(id: str, interview, sys, user, settings = None, metadata: list = None, 
         "temperature": settings["temperature"],
         "max_tokens": settings["max_tokens"],
         "response_format": schema,
-        "langfuse_metadata": {"call_id": id, **meta_dict},
+        # "langfuse_metadata": {"call_id": id, **meta_dict},
     }
     
     if tools:
@@ -55,7 +63,7 @@ def call(id: str, interview, sys, user, settings = None, metadata: list = None, 
         callArgs["messages"].append(msg)
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = {
-                executor.submit(execute_tool, tc.function.name, tc.function.arguments, interview, id): tc
+                executor.submit(execute_tool, tc.function.name, tc.function.arguments, interview_id, id): tc
                 for tc in msg.tool_calls
             }
             for future, tc in futures.items():
@@ -85,10 +93,10 @@ def call(id: str, interview, sys, user, settings = None, metadata: list = None, 
                 f.write(str(raw))
                 f.write("\n---\n")
             
-            if metadata and metadata_fields:
-                   return call(id, interview, sys, user, metadata=metadata, metadata_fields=metadata_fields)
+            if metadata:
+                   return call(id, sys, user, settings=settings, interview_id=None, metadata=metadata)
                
-            return call(id, interview, sys, user)  # Retry without metadata
+            return call(id, sys, user, settings=settings, interview_id=None)  # Retry without metadata
             
     return raw
     
@@ -106,7 +114,13 @@ IDS = {
     "interviewer_summary": "Use for interviewer summary",
 }
 
-def getSettings(interview, id):
+def getSettings(id, interview_id = None, user_id = None):
+    
+    if interview_id is None and id != "autogenerate":
+        raise ValueError(f"'interview_id' must be provided for call id '{id}'")
+    
+    if interview_id is not None:
+        interview = models.Interview.objects.get(id=interview_id)  # Assuming a function to fetch interview by ID
     
     if id in ["patient_content", "patient_tone", "patient_behavior", "patient_grader"]:
         userSettings = interview.chatSettings
@@ -114,7 +128,10 @@ def getSettings(interview, id):
         model = userSettings.patient_model
         
     elif id in ["autogenerate"]:
-        userSettings = interview.newSessionSettings
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        user = User.objects.get(id=user_id)
+        userSettings = user.newSessionSettings
         temperature = userSettings.temperature
         model = userSettings.model
         
@@ -151,8 +168,9 @@ def getSchema(id):
 def getSchemaClass(id):
     return MODELS.SCHEMA_MAP.get(id, None)
 
-def execute_tool(tool_name, tool_args, interview, id):
+def execute_tool(tool_name, tool_args, interview_id, id):
     # args = json.loads(tool_args)
+    interview = models.Interview.objects.get(id=interview_id)
     patient = interview.patient
     field_map = {
             "get_childhood_history":    patient.childhood_history,

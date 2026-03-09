@@ -10,6 +10,7 @@ class NewSessionSettings(models.Model):
     user        = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='newSessionSettings')
     model       = models.CharField(max_length=100, default='qwen3:32b')
     temperature = models.FloatField(default=1.0)   # mirrors DEFAULT_SETTINGS.GENERATION
+    max_tokens = models.IntegerField(default=16384)  # mirrors DEFAULT_SETTINGS.NUM_CTX
 
     def __str__(self):
         return f"NewSessionSettings for {self.user.username}"

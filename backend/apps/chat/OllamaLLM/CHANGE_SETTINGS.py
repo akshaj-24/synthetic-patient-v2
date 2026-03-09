@@ -23,6 +23,7 @@ def get_new_session_settings(user):
         defaults={
             'model':       DEFAULT_SETTINGS.GENERATION_MODEL,
             'temperature': DEFAULT_SETTINGS.GENERATION['temperature'],
+            'max_tokens':  DEFAULT_SETTINGS.NUM_CTX,
         },
     )
     return ns
@@ -55,6 +56,7 @@ def new_session_settings_as_dict(ns) -> dict:
     return {
         'model':       ns.model,
         'temperature': ns.temperature,
+        'max_tokens':  ns.max_tokens,
     }
 
 
