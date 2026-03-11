@@ -219,6 +219,9 @@ def new_interview(request):
         ns = CHANGE_SETTINGS.get_new_session_settings(request.user)
         CHANGE_SETTINGS.seed_chat_settings(interview, ns)
         CHANGE_SETTINGS.delete_new_session_settings(request.user)
+        
+        patient.profile_summary = autogenerate_profile.generateField('profile_summary', {}, '', request, settings=patient.vignette)
+        patient.save(update_fields=['profile_summary'])
 
         return redirect(f"/chat/load/{interview.id}/?new=1")
     return render(request, 'chat/new_interview.html')

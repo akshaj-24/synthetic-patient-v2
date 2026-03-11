@@ -69,69 +69,56 @@ def generateField(field, dependencies, instructions, request=None, settings=None
             return randomWorthlessBeliefs()
         
         case 'intermediate_belief':
-            args = dependencies
-            args["user_instructions"] = instructions
-            sys = langfuse.get_prompt("autogenerate/intermediate_beliefs_sys", label="production")
-            sys = sys.compile()
-            user = langfuse.get_prompt("autogenerate/intermediate_beliefs_user", label="production")
-            user = user.compile(**args)
-            return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=request.user.id, metadata=args, tools=False).content
+            return intermediateBelief(dependencies, instructions, request.user.id, request.user.username, settings)
 
         case 'trigger':
-            #TODO LLM CALL
-            return "1"
+            return trigger(dependencies, instructions, request.user.id, request.user.username, settings)
+        
         case 'auto_thoughts':
-            #TODO LLM CALL
-            return "1"
+            return auto_thoughts(dependencies, instructions, request.user.id, request.user.username, settings)
         case 'coping_strategies':
-            #TODO LLM CALL
-            return "1"
+            return coping_strategies(dependencies, instructions, request.user.id, request.user.username, settings)
         case 'behavior':
-            #TODO LLM CALL
-            return "1"
+            return behavior(dependencies, instructions, request.user.id, request.user.username, settings)
         case 'intake':
-            # TODO LLM CALL
-            return "1"
+            return intake(dependencies, instructions, request.user.id, request.user.username, settings)
         
         case 'childhood_history':
-            # TODO LLM CALL
-            return "1"
+            return childhood_history(dependencies, instructions, request.user.id, request.user.username, settings)
         
         case 'education_history':
-            #TODO LLM
-            return "1"
+            return education_history(dependencies, instructions, request.user.id, request.user.username, settings)
         
         case 'occupation_history':
-            #TODO LLM
-            return "1"
+            return occupation_history(dependencies, instructions, request.user.id, request.user.username, settings)
         
         case 'relationship_history':
-            #TODO LLM
-            return "1"
+            return relationship_history(dependencies, instructions, request.user.id, request.user.username, settings)
         
         case 'medical_history':
-            #TODO LLM
-            return "1"
+            return medical_history(dependencies, instructions, request.user.id, request.user.username, settings)
         
         case 'personal_history':
-            #TODO LLM
-            return "1"
+            return personal_history(dependencies, instructions, request.user.id, request.user.username, settings)
         
         case 'family_tree':
-            #TODO LLM
-            return "1"
+            return family_tree(dependencies, instructions, request.user.id, request.user.username, settings)
         
         case 'timeline':
-            #TODO LLM
-            return "1"
+            return timeline(dependencies, instructions, request.user.id, request.user.username, settings)
         
         case "vignette":
-            # TODO LLM
-            return "1"
+            return vignette(dependencies, instructions, request.user.id, request.user.username, settings)
         
         case 'session_history':
-            # IMPLEMENT IF FORM HAS TEXT INPUT FOR SESSION HISTORY THEN USE CALL LLM 
-            return "No prior sessions with this patient."  
+            if instructions.strip() != "":
+                return session_history(dependencies, instructions, request.user.id, request.user.username, settings)
+            else:
+                return "No prior sessions. This is the patient's first session."
+        
+        case 'profile_summary':
+            return profile_summary(dependencies, instructions, request.user.id, request.user.username, settings)
+
         case __:
             return f"Not yet implemented {field}, INSTRUCTIONS: {instructions}"
 
@@ -620,7 +607,6 @@ def randomPatientType() -> str:
         selected.append(random.choice(options))
     return ", ".join(selected)
 
-
 def randomPsiEmotions():
     patient = random.choice(_PSI_PATIENTS)
     
@@ -644,8 +630,268 @@ def randomUnlovableBeliefs():
     beliefs = patient.get("unlovable_belief", [])
     return ", ".join(beliefs) if beliefs else "No unlovable beliefs in patient"
 
+@observe(name="intermediate_belief_generation", as_type="span")
+def intermediateBelief(dependencies, instructions, user_id, user_name, settings):
+    args = dependencies
+    args["user_instructions"] = instructions
+    sys = langfuse.get_prompt("autogenerate/intermediate_beliefs_sys", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("autogenerate/intermediate_beliefs_user", label="production")
+    user = user.compile(**args)
+    
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
+    
+    return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+
+
 def randomWorthlessBeliefs():
     patient = random.choice(_PSI_PATIENTS)
     
     beliefs = patient.get("worthless_belief", [])
     return ", ".join(beliefs) if beliefs else "No worthless beliefs in patient"
+
+@observe(name="trigger_generation", as_type="span")
+def trigger(dependencies, instructions, user_id, user_name, settings):
+    args = dependencies
+    args["user_instructions"] = instructions
+    
+    sys_args = {
+        "age": dependencies.get("age"),
+        "marital_status": dependencies.get("marital_status"),
+        "education": dependencies.get("education"),
+        "occupation": dependencies.get("occupation"),
+        "disorder": dependencies.get("disorder"),
+        "type": dependencies.get("type"),
+    }
+    
+    sys = langfuse.get_prompt("autogenerate/trigger_sys", label="production")
+    sys = sys.compile(**sys_args)
+    user = langfuse.get_prompt("autogenerate/trigger_user", label="production")
+    user = user.compile(**args)
+    
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
+    
+    return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+
+@observe(name="auto_thoughts", as_type="span")
+def auto_thoughts(dependencies, instructions, user_id, user_name, settings):
+    args = dependencies
+    args["user_instructions"] = instructions
+    sys = langfuse.get_prompt("autogenerate/auto_thoughts_sys", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("autogenerate/auto_thoughts_user", label="production")
+    user = user.compile(**args)
+    
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
+    
+    return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+
+@observe(name="coping_strategies", as_type="span")
+def coping_strategies(dependencies, instructions, user_id, user_name, settings):
+    args = dependencies
+    args["user_instructions"] = instructions
+    sys = langfuse.get_prompt("autogenerate/coping_strategies_sys", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("autogenerate/coping_strategies_user", label="production")
+    user = user.compile(**args)
+    
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
+    
+    return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+
+@observe(name="behavior", as_type="span")
+def behavior(dependencies, instructions, user_id, user_name, settings):
+    args = dependencies
+    args["user_instructions"] = instructions
+    sys = langfuse.get_prompt("autogenerate/behavior_sys", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("autogenerate/behavior_user", label="production")
+    user = user.compile(**args)
+    
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
+    
+    return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+
+@observe(name="intake", as_type="span")
+def intake(dependencies, instructions, user_id, user_name, settings):
+    args = dependencies
+    args["user_instructions"] = instructions
+    sys = langfuse.get_prompt("autogenerate/intake_sys", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("autogenerate/intake_user", label="production")
+    user = user.compile(**args)
+    
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
+    
+    return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+
+@observe(name="childhood_history", as_type="span")
+def childhood_history(dependencies, instructions, user_id, user_name, settings):
+    args = dependencies
+    args["user_instructions"] = instructions
+    sys = langfuse.get_prompt("autogenerate/history/childhood_sys", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("autogenerate/history/childhood_user", label="production")
+    user = user.compile(**args)
+    
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
+    
+    return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+
+@observe(name="education_history", as_type="span")
+def education_history(dependencies, instructions, user_id, user_name, settings):
+    args = dependencies
+    args["user_instructions"] = instructions
+    sys = langfuse.get_prompt("autogenerate/history/education_sys", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("autogenerate/history/education_user", label="production")
+    user = user.compile(**args)
+    
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
+    
+    return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+
+@observe(name="occupation_history", as_type="span")
+def occupation_history(dependencies, instructions, user_id, user_name, settings):
+    args = dependencies
+    args["user_instructions"] = instructions
+    sys = langfuse.get_prompt("autogenerate/history/occupation_sys", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("autogenerate/history/occupation_user", label="production")
+    user = user.compile(**args)
+    
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
+    
+    return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+
+@observe(name="relationship_history", as_type="span")
+def relationship_history(dependencies, instructions, user_id, user_name, settings):
+    args = dependencies
+    args["user_instructions"] = instructions
+    sys = langfuse.get_prompt("autogenerate/history/relationship_sys", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("autogenerate/history/relationship_user", label="production")
+    user = user.compile(**args)
+    
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
+    
+    return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+
+@observe(name="medical_history", as_type="span")
+def medical_history(dependencies, instructions, user_id, user_name, settings):
+    args = dependencies
+    args["user_instructions"] = instructions
+    sys = langfuse.get_prompt("autogenerate/history/medical_sys", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("autogenerate/history/medical_user", label="production")
+    user = user.compile(**args)
+    
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
+    
+    return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+
+@observe(name="personal_history", as_type="span")
+def personal_history(dependencies, instructions, user_id, user_name, settings):
+    args = dependencies
+    args["user_instructions"] = instructions
+    sys = langfuse.get_prompt("autogenerate/history/personal_sys", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("autogenerate/history/personal_user", label="production")
+    user = user.compile(**args)
+    
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
+    
+    return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+
+@observe(name="family_tree", as_type="span")
+def family_tree(dependencies, instructions, user_id, user_name, settings):
+    args = dependencies
+    args["user_instructions"] = instructions
+    sys = langfuse.get_prompt("autogenerate/history/family_sys", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("autogenerate/history/family_user", label="production")
+    user = user.compile(**args)
+    
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
+    
+    return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+
+@observe(name="timeline", as_type="span")
+def timeline(dependencies, instructions, user_id, user_name, settings):
+    args = dependencies
+    args["user_instructions"] = instructions
+    sys = langfuse.get_prompt("autogenerate/history/timeline_sys", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("autogenerate/history/timeline_user", label="production")
+    user = user.compile(**args)
+    
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
+    
+    return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+
+@observe(name="vignette", as_type="span")
+def vignette(dependencies, instructions, user_id, user_name, settings):
+    args = dependencies
+    args["user_instructions"] = instructions
+    sys = langfuse.get_prompt("autogenerate/vignette_sys", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("autogenerate/vignette_user", label="production")
+    user = user.compile(**args)
+    
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
+    
+    return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+
+@observe(name="session_history", as_type="span")
+def session_history(dependencies, instructions, user_id, user_name, settings):
+    args = dependencies
+    args["user_instructions"] = instructions
+    sys = langfuse.get_prompt("autogenerate/history/session_sys", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("autogenerate/history/session_user", label="production")
+    user = user.compile(**args)
+    
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
+    
+    return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+
+@observe(name="profile_summary", as_type="span")
+def profile_summary(dependencies, instructions, user_id, user_name, settings):
+    
+    print(settings)
+    
+    args = {
+        "vignette": settings,
+    }
+    
+    sys = langfuse.get_prompt("autogenerate/profile_summary_sys", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("autogenerate/profile_summary_user", label="production")
+    user = user.compile(**args)
+    
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
+    
+    summary_settings = {
+        "model": "qwen3:32b",  # Use a more powerful model for the summary step
+        "temperature": 0.3,     # Lower temperature for more coherent summaries
+        "max_tokens": 1000,    # Allow for longer summaries
+    }
+    
+    return LLM.call("autogenerate", sys=sys, user=user, settings=summary_settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content

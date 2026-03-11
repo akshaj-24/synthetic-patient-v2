@@ -74,9 +74,14 @@
     <div class="section-card">
       <div class="section-header">
         <h5 class="mb-0"><i class="bi bi-person-vcard me-2"></i>Identity</h5>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="autogenerateSection('identity')">
-          <i class="bi bi-stars me-1"></i> Autogenerate Section
-        </button>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="autogenerateSection('identity')">
+            <i class="bi bi-stars me-1"></i> Autogenerate Section
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="regenSection('identity')" title="Clear and regenerate all fields in this section">
+            <i class="bi bi-arrow-clockwise me-1"></i> Regenerate Section
+          </button>
+        </div>
       </div>
 
       <div class="row g-2">
@@ -86,6 +91,7 @@
             <div class="field-row">
               <div class="field-input"><input type="number" id="age" name="age" class="form-control" placeholder="18-80" min="18" max="80"></div>
               <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('age', getDeps('age'))"><i class="bi bi-shuffle"></i></button>
+              <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('age')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
             </div>
           </div>
         </div>
@@ -103,6 +109,7 @@
                 </select>
               </div>
               <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('gender', getDeps('gender'))"><i class="bi bi-shuffle"></i></button>
+              <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('gender')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
             </div>
           </div>
         </div>
@@ -126,6 +133,7 @@
                 </select>
               </div>
               <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('ethnicity', getDeps('ethnicity'))"><i class="bi bi-shuffle"></i></button>
+              <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('ethnicity')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
             </div>
           </div>
         </div>
@@ -147,6 +155,7 @@
                 </select>
               </div>
               <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('marital_status', getDeps('marital_status'))"><i class="bi bi-shuffle"></i></button>
+              <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('marital_status')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
             </div>
           </div>
         </div>
@@ -157,6 +166,7 @@
         <div class="field-row">
           <div class="field-input"><input type="text" id="name" name="name" class="form-control" placeholder="Patient Name"></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('name', getDeps('name'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('name')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -165,6 +175,7 @@
         <div class="field-row">
           <div class="field-input"><input type="text" id="education" name="education" class="form-control" placeholder="Education Level"></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('education', getDeps('education'))"><i class="bi bi-shuffle"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('education')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -173,6 +184,7 @@
         <div class="field-row">
           <div class="field-input"><input type="text" id="occupation" name="occupation" class="form-control" placeholder="Occupation"></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('occupation', getDeps('occupation'))"><i class="bi bi-shuffle"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('occupation')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
     </div>
@@ -181,9 +193,14 @@
     <div class="section-card">
       <div class="section-header">
         <h5 class="mb-0"><i class="bi bi-clipboard2-pulse me-2"></i>Clinical Profile</h5>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="autogenerateSection('clinical')">
-          <i class="bi bi-stars me-1"></i> Autogenerate Section
-        </button>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="autogenerateSection('clinical')">
+            <i class="bi bi-stars me-1"></i> Autogenerate Section
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="regenSection('clinical')" title="Clear and regenerate all fields in this section">
+            <i class="bi bi-arrow-clockwise me-1"></i> Regenerate Section
+          </button>
+        </div>
       </div>
 
       <div class="field-wrap">
@@ -198,6 +215,7 @@
             </select>
           </div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('disorder', getDeps('disorder'))"><i class="bi bi-shuffle"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('disorder')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -206,6 +224,7 @@
         <div class="field-row">
           <div class="field-input"><input type="text" id="type" name="type" class="form-control" placeholder="e.g. anxious, avoidant, withdrawn"></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('type', getDeps('type'))"><i class="bi bi-shuffle"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('type')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -214,6 +233,7 @@
         <div class="field-row">
           <div class="field-input"><input type="text" id="base_emotions" name="base_emotions" class="form-control" placeholder="e.g. sadness, guilt, shame"></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('base_emotions', getDeps('base_emotions'))"><i class="bi bi-shuffle"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('base_emotions')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -222,6 +242,7 @@
         <div class="field-row">
           <div class="field-input"><textarea id="intake" name="intake" class="form-control" rows="2" placeholder="Intake summary"></textarea></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('intake', getDeps('intake'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('intake')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
     </div>
@@ -230,9 +251,14 @@
     <div class="section-card">
       <div class="section-header">
         <h5 class="mb-0"><i class="bi bi-diagram-3 me-2"></i>Cognitive Model</h5>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="autogenerateSection('cbt')">
-          <i class="bi bi-stars me-1"></i> Autogenerate Section
-        </button>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="autogenerateSection('cbt')">
+            <i class="bi bi-stars me-1"></i> Autogenerate Section
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="regenSection('cbt')" title="Clear and regenerate all fields in this section">
+            <i class="bi bi-arrow-clockwise me-1"></i> Regenerate Section
+          </button>
+        </div>
       </div>
 
       <div class="field-wrap">
@@ -240,6 +266,7 @@
         <div class="field-row">
           <div class="field-input"><input type="text" id="helpless_beliefs" name="helpless_beliefs" class="form-control" placeholder="e.g. I am powerless, Nothing I do matters"></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('helpless_beliefs', getDeps('helpless_beliefs'))"><i class="bi bi-shuffle"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('helpless_beliefs')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -248,6 +275,7 @@
         <div class="field-row">
           <div class="field-input"><input type="text" id="unlovable_beliefs" name="unlovable_beliefs" class="form-control" placeholder="e.g. I am unworthy of love"></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('unlovable_beliefs', getDeps('unlovable_beliefs'))"><i class="bi bi-shuffle"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('unlovable_beliefs')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -256,6 +284,7 @@
         <div class="field-row">
           <div class="field-input"><input type="text" id="worthless_beliefs" name="worthless_beliefs" class="form-control" placeholder="e.g. I am a failure"></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('worthless_beliefs', getDeps('worthless_beliefs'))"><i class="bi bi-shuffle"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('worthless_beliefs')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -264,6 +293,7 @@
         <div class="field-row">
           <div class="field-input"><textarea id="intermediate_belief" name="intermediate_belief" class="form-control" rows="4" placeholder="Rules, attitudes, assumptions"></textarea></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('intermediate_belief', getDeps('intermediate_belief'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('intermediate_belief')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -272,6 +302,7 @@
         <div class="field-row">
           <div class="field-input"><textarea id="trigger" name="trigger" class="form-control" rows="2" placeholder="Situations that activate core beliefs"></textarea></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('trigger', getDeps('trigger'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('trigger')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -280,6 +311,7 @@
         <div class="field-row">
           <div class="field-input"><textarea id="auto_thoughts" name="auto_thoughts" class="form-control" rows="2" placeholder="Automatic thoughts in response to triggers"></textarea></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('auto_thoughts', getDeps('auto_thoughts'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('auto_thoughts')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -288,6 +320,7 @@
         <div class="field-row">
           <div class="field-input"><textarea id="coping_strategies" name="coping_strategies" class="form-control" rows="2" placeholder="How the patient copes"></textarea></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('coping_strategies', getDeps('coping_strategies'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('coping_strategies')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -296,6 +329,7 @@
         <div class="field-row">
           <div class="field-input"><textarea id="behavior" name="behavior" class="form-control" rows="2" placeholder="Observable behavioral patterns"></textarea></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('behavior', getDeps('behavior'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('behavior')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
     </div>
@@ -304,9 +338,14 @@
     <div class="section-card">
       <div class="section-header">
         <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Background & History</h5>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="autogenerateSection('background')">
-          <i class="bi bi-stars me-1"></i> Autogenerate Section
-        </button>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="autogenerateSection('background')">
+            <i class="bi bi-stars me-1"></i> Autogenerate Section
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="regenSection('background')" title="Clear and regenerate all fields in this section">
+            <i class="bi bi-arrow-clockwise me-1"></i> Regenerate Section
+          </button>
+        </div>
       </div>
 
       <div class="field-wrap">
@@ -314,6 +353,7 @@
         <div class="field-row">
           <div class="field-input"><textarea id="childhood_history" name="childhood_history" class="form-control" rows="3" placeholder="Patient childhood events"></textarea></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('childhood_history', getDeps('childhood_history'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('childhood_history')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -322,6 +362,7 @@
         <div class="field-row">
           <div class="field-input"><textarea id="education_history" name="education_history" class="form-control" rows="3" placeholder="Patient education history"></textarea></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('education_history', getDeps('education_history'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('education_history')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -330,6 +371,7 @@
         <div class="field-row">
           <div class="field-input"><textarea id="occupation_history" name="occupation_history" class="form-control" rows="3" placeholder="Patient occupation history"></textarea></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('occupation_history', getDeps('occupation_history'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('occupation_history')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -338,6 +380,7 @@
         <div class="field-row">
           <div class="field-input"><textarea id="relationship_history" name="relationship_history" class="form-control" rows="3" placeholder="Patient relationship history"></textarea></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('relationship_history', getDeps('relationship_history'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('relationship_history')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -346,6 +389,7 @@
         <div class="field-row">
           <div class="field-input"><textarea id="medical_history" name="medical_history" class="form-control" rows="3" placeholder="Patient medical history"></textarea></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('medical_history', getDeps('medical_history'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('medical_history')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -354,6 +398,7 @@
         <div class="field-row">
           <div class="field-input"><textarea id="personal_history" name="personal_history" class="form-control" rows="3" placeholder="Patient personal history"></textarea></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('personal_history', getDeps('personal_history'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('personal_history')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -362,6 +407,7 @@
         <div class="field-row">
           <div class="field-input"><textarea id="session_history" name="session_history" class="form-control" rows="3" placeholder="Patient session history: If you want to simulate a follow up session please provide a brief summary of what you discussed previously OR instructions for auto generation. Blank auto-generation will assume no prior sessions."></textarea></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('session_history', getDeps('session_history'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('session_history')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -370,6 +416,7 @@
         <div class="field-row">
           <div class="field-input"><textarea id="family_tree" name="family_tree" class="form-control" rows="3" placeholder="Family structure and relationships"></textarea></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('family_tree', getDeps('family_tree'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('family_tree')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -378,6 +425,7 @@
         <div class="field-row">
           <div class="field-input"><textarea id="timeline" name="timeline" class="form-control" rows="3" placeholder="Key life events in chronological order"></textarea></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('timeline', getDeps('timeline'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('timeline')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
     </div>
@@ -386,9 +434,14 @@
     <div class="section-card">
       <div class="section-header">
         <h5 class="mb-0"><i class="bi bi-journal-text me-2"></i>Narrative</h5>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="autogenerateSection('narrative')">
-          <i class="bi bi-stars me-1"></i> Autogenerate Section
-        </button>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="autogenerateSection('narrative')">
+            <i class="bi bi-stars me-1"></i> Autogenerate Section
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="regenSection('narrative')" title="Clear and regenerate all fields in this section">
+            <i class="bi bi-arrow-clockwise me-1"></i> Regenerate Section
+          </button>
+        </div>
       </div>
 
       <div class="field-wrap">
@@ -396,6 +449,7 @@
         <div class="field-row">
           <div class="field-input"><textarea id="vignette" name="vignette" class="form-control" rows="4" placeholder="Short narrative vignette describing the patient, may include key events, emotions, and behaviors"></textarea></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('vignette', getDeps('vignette'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('vignette')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
     </div>
@@ -525,6 +579,34 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{% static 'js/scripts.js' %}"></script>
 <script>
+/* ── Regenerate helpers ── */
+function regenField(fieldId) {
+  const el = document.getElementById(fieldId);
+  if (!el) return;
+  if (el.tagName === 'SELECT') {
+    el.value = '';
+  } else {
+    el.value = '';
+  }
+  generateField(fieldId, getDeps(fieldId));
+}
+
+function regenSection(section) {
+  const sectionFields = {
+    identity:   ['age', 'gender', 'ethnicity', 'marital_status', 'name', 'education', 'occupation'],
+    clinical:   ['disorder', 'type', 'base_emotions', 'intake'],
+    cbt:        ['helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs', 'intermediate_belief', 'trigger', 'auto_thoughts', 'coping_strategies', 'behavior'],
+    background: ['childhood_history', 'education_history', 'occupation_history', 'relationship_history', 'medical_history', 'personal_history', 'session_history', 'family_tree', 'timeline'],
+    narrative:  ['vignette'],
+  };
+  const fields = sectionFields[section] || [];
+  fields.forEach(fieldId => {
+    const el = document.getElementById(fieldId);
+    if (el) el.value = '';
+  });
+  fields.forEach(fieldId => generateField(fieldId, getDeps(fieldId)));
+}
+
 /* ── Settings offcanvas (new interview page) ── */
 const tempSlider = document.getElementById('tempSlider');
 const tempVal    = document.getElementById('tempValue');

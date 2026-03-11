@@ -17,7 +17,7 @@ langfuse = get_client()
 
 client = OpenAI(base_url=OLLAMA_SETTINGS.BASE_URL, api_key=OLLAMA_SETTINGS.API_KEY)
 
-@observe()
+@observe(name="LLM_CALL", as_type="generation")
 def call(id: str, sys, user, settings = None, interview_id = None, user_id = None, metadata: dict = None, tools:bool=False):
     
     if settings is None:
@@ -32,8 +32,9 @@ def call(id: str, sys, user, settings = None, interview_id = None, user_id = Non
     
     schema = getSchema(id)
     schema_class = getSchemaClass(id)
-
-    langfuse.update_current_trace(metadata=metadata)
+    
+    if metadata is not None:
+        langfuse.update_current_trace(metadata=metadata)
     
     messages=[
             {"role": "system", "content": sys},
