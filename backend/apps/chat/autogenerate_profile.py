@@ -819,9 +819,9 @@ def personal_history(dependencies, instructions, user_id, user_name, settings):
 def family_tree(dependencies, instructions, user_id, user_name, settings):
     args = dependencies
     args["user_instructions"] = instructions
-    sys = langfuse.get_prompt("autogenerate/history/family_sys", label="production")
+    sys = langfuse.get_prompt("autogenerate/history/family_tree_sys", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("autogenerate/history/family_user", label="production")
+    user = langfuse.get_prompt("autogenerate/history/family_tree_user", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
@@ -880,9 +880,9 @@ def profile_summary(dependencies, instructions, user_id, user_name, settings):
         "vignette": settings,
     }
     
-    sys = langfuse.get_prompt("autogenerate/profile_summary_sys", label="production")
+    sys = langfuse.get_prompt("profile_summary_sys", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("autogenerate/profile_summary_user", label="production")
+    user = langfuse.get_prompt("profile_summary_user", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
