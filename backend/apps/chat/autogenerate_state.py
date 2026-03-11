@@ -19,6 +19,7 @@ def response(field, state, settings=None):
     # model       = settings.patient_model       if settings else 'qwen3:32b'
     # temperature = settings.patient_temperature if settings else 0.7
     # result = ollama_client.chat(model=model, options={'temperature': temperature}, ...)
-
-    time.sleep(1)
-    return f"Generated {field} at turn {state.turn_count} for patient {state.interview.patient.name}"
+    
+    time.sleep(0.2)
+    
+    return ""

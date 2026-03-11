@@ -159,6 +159,27 @@
             </div>
           </div>
         </div>
+
+        <div class="col-md-6">
+          <div class="field-wrap">
+            <label class="form-label small text-muted">Children</label>
+            <div class="field-row">
+              <div class="field-input"><input type="number" id="children" name="children" class="form-control" placeholder="0" min="0" max="15"></div>
+              <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('children', getDeps('children'))"><i class="bi bi-shuffle"></i></button>
+              <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('children')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="field-wrap">
+            <label class="form-label small text-muted">Grandchildren</label>
+            <div class="field-row">
+              <div class="field-input"><input type="number" id="grandchildren" name="grandchildren" class="form-control" placeholder="0" min="0" max="20"></div>
+              <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('grandchildren', getDeps('grandchildren'))"><i class="bi bi-shuffle"></i></button>
+              <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('grandchildren')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="field-wrap">
@@ -593,7 +614,7 @@ function regenField(fieldId) {
 
 function regenSection(section) {
   const sectionFields = {
-    identity:   ['age', 'gender', 'ethnicity', 'marital_status', 'name', 'education', 'occupation'],
+    identity:   ['age', 'gender', 'ethnicity', 'marital_status', 'children', 'grandchildren', 'name', 'education', 'occupation'],
     clinical:   ['disorder', 'type', 'base_emotions', 'intake'],
     cbt:        ['helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs', 'intermediate_belief', 'trigger', 'auto_thoughts', 'coping_strategies', 'behavior'],
     background: ['childhood_history', 'education_history', 'occupation_history', 'relationship_history', 'medical_history', 'personal_history', 'session_history', 'family_tree', 'timeline'],

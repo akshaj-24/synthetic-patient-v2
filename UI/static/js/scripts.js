@@ -5,6 +5,8 @@ const sectionFields = {
         { id: 'name',           deps: ['gender'] },
         { id: 'ethnicity',      deps: [] },
         { id: 'marital_status', deps: ['age'] },
+        { id: 'children',       deps: ['age', 'marital_status'] },
+        { id: 'grandchildren',  deps: ['age', 'children'] },
         { id: 'education',      deps: ['age'] },
         { id: 'occupation',     deps: ['education'] },
     ],
@@ -33,7 +35,7 @@ const sectionFields = {
         { id: 'relationship_history', deps: ['name', 'age', 'gender', 'ethnicity', 'marital_status', 'trigger', 'intake', 'disorder', 'type', 'childhood_history', 'helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs', 'intermediate_belief', 'coping_strategies'] },
         { id: 'medical_history',      deps: ['name', 'age', 'gender', 'ethnicity', 'trigger', 'intake', 'disorder', 'helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs', 'intermediate_belief', 'coping_strategies'] },
         { id: 'personal_history',     deps: ['name', 'age', 'gender', 'ethnicity', 'marital_status', 'occupation', 'disorder', 'type', 'trigger', 'intake', 'helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs', 'intermediate_belief', 'coping_strategies', 'childhood_history', 'education_history', 'occupation_history', 'relationship_history', 'medical_history'] },
-        { id: 'family_tree',          deps: ['name', 'age', 'gender', 'ethnicity', 'marital_status', 'trigger', 'intake', 'childhood_history', 'relationship_history'] },
+        { id: 'family_tree',          deps: ['name', 'age', 'gender', 'ethnicity', 'marital_status', 'trigger', 'intake', 'childhood_history', 'relationship_history', 'education_history', 'personal_history'] },
         { id: 'timeline',             deps: ['name', 'age', 'gender', 'trigger', 'intake', 'childhood_history', 'education_history', 'occupation_history', 'relationship_history', 'medical_history', 'personal_history'] },
         { id: 'session_history',      deps: ['name', 'disorder', 'type', 'coping_strategies', 'trigger', 'intake'] },
     ],
@@ -350,6 +352,7 @@ function renderProfile(p) {
         <div class="row">
             <div class="col-md-6">
                 ${f('Age', p.age)} ${f('Gender', p.gender)} ${f('Ethnicity', p.ethnicity)} ${f('Marital Status', p.marital_status)}
+                ${f('Children', p.children)} ${f('Grandchildren', p.grandchildren)}
                 ${f('Education', p.education)} ${f('Occupation', p.occupation)}
                 ${f('Disorder', p.disorder)} ${f('Patient Type', p.type)}
                 ${f('Starting Emotions', p.base_emotions)}
@@ -404,7 +407,7 @@ function fillForm(p) {
         }
     };
     [
-        'name', 'age', 'gender', 'ethnicity', 'marital_status', 'education', 'occupation',
+        'name', 'age', 'gender', 'ethnicity', 'marital_status', 'children', 'grandchildren', 'education', 'occupation',
         'disorder', 'type', 'base_emotions', 'intake',
         'helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs',
         'intermediate_belief', 'trigger', 'auto_thoughts',

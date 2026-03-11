@@ -181,12 +181,12 @@ def checkAndUpdateSummary(interview):
         state.save(update_fields=['summary_turn'])
         
         #TODO add llm calls
-        updated_summary = f"Updated summary based on conversation so far: {getLastNTurnsString(interview)}"  # Placeholder for actual summary logic
+        updated_summary = f"Updated summary based on conversation so far: {getLastNTurnsString(interview, state.summary_freq)}"  # Placeholder for actual summary logic
         state.summary = state.summary + "\n" + updated_summary
         state.save(update_fields=['summary'])
         
         #TODO add llm calls
-        updated_patient_summary = f"Updated summary based on conversation so far: {getLastNTurnsString(interview)}"  # Placeholder for actual summary logic
+        updated_patient_summary = f"Updated summary based on conversation so far: {getLastNTurnsString(interview, state.summary_freq)}"  # Placeholder for actual summary logic
         state.patient_summary = state.patient_summary + "\n" + updated_patient_summary
         state.save(update_fields=['patient_summary'])
         

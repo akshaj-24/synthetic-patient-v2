@@ -42,6 +42,9 @@ class Patient(models.Model):
     disorder             = models.TextField(blank=True)
     type                 = models.JSONField(default=list, blank=True)
     marital_status       = models.CharField(max_length=50, blank=True)
+    
+    children             = models.IntegerField(blank=True)
+    grandchildren        = models.IntegerField(blank=True)
 
     # History (split)
     childhood_history    = models.TextField(blank=True)

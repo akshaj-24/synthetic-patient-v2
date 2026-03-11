@@ -49,6 +49,14 @@ def generateField(field, dependencies, instructions, request=None, settings=None
         case 'marital_status':
             age = dependencies.get('age')
             return randomMaritalStatus(age)
+        case 'children':
+            age          = dependencies.get('age')
+            marital_status = dependencies.get('marital_status')
+            return randomChildren(age, marital_status)
+        case 'grandchildren':
+            age      = dependencies.get('age')
+            children = dependencies.get('children')
+            return randomGrandchildren(age, children)
         case 'education':
             age = dependencies.get('age')
             return randomEducation(int(age))
@@ -261,6 +269,41 @@ def randomMaritalStatus(age):
     probabilities = list(weights.values())
     return random.choices(statuses, weights=probabilities, k=1)[0]
     
+def randomChildren(age, marital_status):
+    age = int(age) if age else 30
+    if age < 20:
+        weights = [0.99, 0.01, 0.00, 0.00]
+    elif age < 25:
+        weights = [0.91, 0.08, 0.01, 0.00]
+    elif age < 30:
+        weights = [0.70, 0.25, 0.05, 0.00]
+    elif age < 40:
+        weights = [0.35, 0.35, 0.22, 0.08]
+    elif age < 50:
+        weights = [0.25, 0.38, 0.27, 0.10]
+    elif age < 60:
+        weights = [0.25, 0.35, 0.28, 0.12]
+    else:
+        weights = [0.22, 0.35, 0.30, 0.13]
+    return random.choices([0, 1, 2, 3], weights=weights, k=1)[0]
+
+
+def randomGrandchildren(age, children):
+    age      = int(age)      if age      else 40
+    children = int(children) if children else 0
+    if age < 45 or children == 0:
+        return 0
+    if age < 55:
+        weights = [0.88, 0.10, 0.02]
+    elif age < 65:
+        weights = [0.55, 0.32, 0.13]
+    elif age < 75:
+        weights = [0.30, 0.42, 0.28]
+    else:
+        weights = [0.18, 0.44, 0.38]
+    return random.choices([0, 1, 2], weights=weights, k=1)[0]
+
+
 def randomName(gender):
     name = ''
     
