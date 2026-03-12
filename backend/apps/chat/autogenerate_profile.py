@@ -677,9 +677,9 @@ def randomUnlovableBeliefs():
 def intermediateBelief(dependencies, instructions, user_id, user_name, settings):
     args = dependencies
     args["user_instructions"] = instructions
-    sys = langfuse.get_prompt("autogenerate/intermediate_beliefs_sys", label="production")
+    sys = langfuse.get_prompt("profile/sys/intermediate_belief", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("autogenerate/intermediate_beliefs_user", label="production")
+    user = langfuse.get_prompt("profile/user/intermediate_belief", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
@@ -708,9 +708,9 @@ def trigger(dependencies, instructions, user_id, user_name, settings):
         "type": dependencies.get("type"),
     }
     
-    sys = langfuse.get_prompt("autogenerate/trigger_sys", label="production")
+    sys = langfuse.get_prompt("profile/sys/trigger", label="production")
     sys = sys.compile(**sys_args)
-    user = langfuse.get_prompt("autogenerate/trigger_user", label="production")
+    user = langfuse.get_prompt("profile/user/trigger", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
@@ -722,9 +722,9 @@ def trigger(dependencies, instructions, user_id, user_name, settings):
 def auto_thoughts(dependencies, instructions, user_id, user_name, settings):
     args = dependencies
     args["user_instructions"] = instructions
-    sys = langfuse.get_prompt("autogenerate/auto_thoughts_sys", label="production")
+    sys = langfuse.get_prompt("profile/sys/auto_thoughts", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("autogenerate/auto_thoughts_user", label="production")
+    user = langfuse.get_prompt("profile/user/auto_thoughts", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
@@ -736,9 +736,9 @@ def auto_thoughts(dependencies, instructions, user_id, user_name, settings):
 def coping_strategies(dependencies, instructions, user_id, user_name, settings):
     args = dependencies
     args["user_instructions"] = instructions
-    sys = langfuse.get_prompt("autogenerate/coping_strategies_sys", label="production")
+    sys = langfuse.get_prompt("profile/sys/coping_strategies", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("autogenerate/coping_strategies_user", label="production")
+    user = langfuse.get_prompt("profile/user/coping_strategies", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
@@ -750,9 +750,9 @@ def coping_strategies(dependencies, instructions, user_id, user_name, settings):
 def behavior(dependencies, instructions, user_id, user_name, settings):
     args = dependencies
     args["user_instructions"] = instructions
-    sys = langfuse.get_prompt("autogenerate/behavior_sys", label="production")
+    sys = langfuse.get_prompt("profile/sys/behavior", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("autogenerate/behavior_user", label="production")
+    user = langfuse.get_prompt("profile/user/behavior", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
@@ -764,9 +764,9 @@ def behavior(dependencies, instructions, user_id, user_name, settings):
 def intake(dependencies, instructions, user_id, user_name, settings):
     args = dependencies
     args["user_instructions"] = instructions
-    sys = langfuse.get_prompt("autogenerate/intake_sys", label="production")
+    sys = langfuse.get_prompt("profile/sys/intake", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("autogenerate/intake_user", label="production")
+    user = langfuse.get_prompt("profile/user/intake", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
@@ -778,9 +778,9 @@ def intake(dependencies, instructions, user_id, user_name, settings):
 def childhood_history(dependencies, instructions, user_id, user_name, settings):
     args = dependencies
     args["user_instructions"] = instructions
-    sys = langfuse.get_prompt("autogenerate/history/childhood_sys", label="production")
+    sys = langfuse.get_prompt("profile/sys/history", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("autogenerate/history/childhood_user", label="production")
+    user = langfuse.get_prompt("profile/user/history/childhood", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
@@ -792,9 +792,9 @@ def childhood_history(dependencies, instructions, user_id, user_name, settings):
 def education_history(dependencies, instructions, user_id, user_name, settings):
     args = dependencies
     args["user_instructions"] = instructions
-    sys = langfuse.get_prompt("autogenerate/history/education_sys", label="production")
+    sys = langfuse.get_prompt("profile/sys/history", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("autogenerate/history/education_user", label="production")
+    user = langfuse.get_prompt("profile/user/history/education", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
@@ -806,9 +806,9 @@ def education_history(dependencies, instructions, user_id, user_name, settings):
 def occupation_history(dependencies, instructions, user_id, user_name, settings):
     args = dependencies
     args["user_instructions"] = instructions
-    sys = langfuse.get_prompt("autogenerate/history/occupation_sys", label="production")
+    sys = langfuse.get_prompt("profile/sys/history", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("autogenerate/history/occupation_user", label="production")
+    user = langfuse.get_prompt("profile/user/history/occupation", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
@@ -820,9 +820,9 @@ def occupation_history(dependencies, instructions, user_id, user_name, settings)
 def relationship_history(dependencies, instructions, user_id, user_name, settings):
     args = dependencies
     args["user_instructions"] = instructions
-    sys = langfuse.get_prompt("autogenerate/history/relationship_sys", label="production")
+    sys = langfuse.get_prompt("profile/sys/history", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("autogenerate/history/relationship_user", label="production")
+    user = langfuse.get_prompt("profile/user/history/relationship", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
@@ -834,9 +834,9 @@ def relationship_history(dependencies, instructions, user_id, user_name, setting
 def medical_history(dependencies, instructions, user_id, user_name, settings):
     args = dependencies
     args["user_instructions"] = instructions
-    sys = langfuse.get_prompt("autogenerate/history/medical_sys", label="production")
+    sys = langfuse.get_prompt("profile/sys/history", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("autogenerate/history/medical_user", label="production")
+    user = langfuse.get_prompt("profile/user/history/medical", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
@@ -848,9 +848,9 @@ def medical_history(dependencies, instructions, user_id, user_name, settings):
 def personal_history(dependencies, instructions, user_id, user_name, settings):
     args = dependencies
     args["user_instructions"] = instructions
-    sys = langfuse.get_prompt("autogenerate/history/personal_sys", label="production")
+    sys = langfuse.get_prompt("profile/sys/history", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("autogenerate/history/personal_user", label="production")
+    user = langfuse.get_prompt("profile/user/history/personal", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
@@ -862,9 +862,9 @@ def personal_history(dependencies, instructions, user_id, user_name, settings):
 def family_tree(dependencies, instructions, user_id, user_name, settings):
     args = dependencies
     args["user_instructions"] = instructions
-    sys = langfuse.get_prompt("autogenerate/history/family_tree_sys", label="production")
+    sys = langfuse.get_prompt("profile/sys/history", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("autogenerate/history/family_tree_user", label="production")
+    user = langfuse.get_prompt("profile/user/history/family_tree", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
@@ -876,9 +876,9 @@ def family_tree(dependencies, instructions, user_id, user_name, settings):
 def timeline(dependencies, instructions, user_id, user_name, settings):
     args = dependencies
     args["user_instructions"] = instructions
-    sys = langfuse.get_prompt("autogenerate/history/timeline_sys", label="production")
+    sys = langfuse.get_prompt("profile/sys/history", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("autogenerate/history/timeline_user", label="production")
+    user = langfuse.get_prompt("profile/user/history/timeline", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
@@ -890,9 +890,9 @@ def timeline(dependencies, instructions, user_id, user_name, settings):
 def vignette(dependencies, instructions, user_id, user_name, settings):
     args = dependencies
     args["user_instructions"] = instructions
-    sys = langfuse.get_prompt("autogenerate/vignette_sys", label="production")
+    sys = langfuse.get_prompt("profile/sys/vignette", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("autogenerate/vignette_user", label="production")
+    user = langfuse.get_prompt("profile/user/vignette", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
@@ -904,9 +904,9 @@ def vignette(dependencies, instructions, user_id, user_name, settings):
 def session_history(dependencies, instructions, user_id, user_name, settings):
     args = dependencies
     args["user_instructions"] = instructions
-    sys = langfuse.get_prompt("autogenerate/history/session_sys", label="production")
+    sys = langfuse.get_prompt("profile/sys/history", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("autogenerate/history/session_user", label="production")
+    user = langfuse.get_prompt("profile/user/history/session", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
@@ -923,9 +923,9 @@ def profile_summary(dependencies, instructions, user_id, user_name, settings):
         "vignette": settings,
     }
     
-    sys = langfuse.get_prompt("profile_summary_sys", label="production")
+    sys = langfuse.get_prompt("profile/sys/summary", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("profile_summary_user", label="production")
+    user = langfuse.get_prompt("profile/user/summary", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
