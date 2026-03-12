@@ -353,7 +353,18 @@
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('behavior')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
+
+            <div class="field-wrap">
+        <label class="form-label small text-muted">Impact</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="impact" name="impact" class="form-control" rows="2" placeholder="Impact of disorder on day to day life"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('impact', getDeps('impact'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('impact')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
+        </div>
+      </div>
     </div>
+
+
 
     <!-- ── SECTION 4: Background & History ── -->
     <div class="section-card">
@@ -366,6 +377,15 @@
           <button type="button" class="btn btn-sm btn-outline-secondary" onclick="regenSection('background')" title="Clear and regenerate all fields in this section">
             <i class="bi bi-arrow-clockwise me-1"></i> Regenerate Section
           </button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="form-label small text-muted">Canonical Facts</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="canonical_facts" name="canonical_facts" class="form-control" rows="3" placeholder="Key facts used for autogeneration dependencies" readonly style="background:#f8f9fa; cursor:default;"></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('canonical_facts', getDeps('canonical_facts'))" ><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('canonical_facts')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
 
@@ -423,14 +443,7 @@
         </div>
       </div>
 
-      <div class="field-wrap">
-        <label class="form-label small text-muted">Session History</label>
-        <div class="field-row">
-          <div class="field-input"><textarea id="session_history" name="session_history" class="form-control" rows="3" placeholder="Patient session history: If you want to simulate a follow up session please provide a brief summary of what you discussed previously OR instructions for auto generation. Blank auto-generation will assume no prior sessions."></textarea></div>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('session_history', getDeps('session_history'))"><i class="bi bi-stars"></i></button>
-          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('session_history')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
-        </div>
-      </div>
+
 
       <div class="field-wrap">
         <label class="form-label small text-muted">Family Tree</label>
@@ -447,6 +460,15 @@
           <div class="field-input"><textarea id="timeline" name="timeline" class="form-control" rows="3" placeholder="Key life events in chronological order"></textarea></div>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('timeline', getDeps('timeline'))"><i class="bi bi-stars"></i></button>
           <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('timeline')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
+        </div>
+      </div>
+
+            <div class="field-wrap">
+        <label class="form-label small text-muted">Session History</label>
+        <div class="field-row">
+          <div class="field-input"><textarea id="session_history" name="session_history" class="form-control" rows="3" placeholder="Patient session history: If you want to simulate a follow up session please provide a brief summary of what you discussed previously OR instructions for auto generation. Blank auto-generation will assume no prior sessions."></textarea></div>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="generateField('session_history', getDeps('session_history'))"><i class="bi bi-stars"></i></button>
+          <button type="button" class="btn btn-outline-secondary btn-gen" onclick="regenField('session_history')" title="Clear and regenerate"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
     </div>

@@ -47,6 +47,7 @@ class Patient(models.Model):
     grandchildren        = models.IntegerField(blank=True)
 
     # History (split)
+    canonical_facts     = models.TextField(blank=True)  # Single string of key facts used for autogeneration dependencies (not editable by user)
     childhood_history    = models.TextField(blank=True)
     education_history    = models.TextField(blank=True)
     occupation_history   = models.TextField(blank=True)
@@ -64,6 +65,7 @@ class Patient(models.Model):
     auto_thoughts        = models.TextField(blank=True)
     base_emotions        = models.JSONField(default=list, blank=True)
     behavior             = models.TextField(blank=True)
+    impact               = models.TextField(blank=True)
     intake               = models.TextField(blank=True)
     vignette             = models.TextField(blank=True)
     family_tree          = models.TextField(blank=True)

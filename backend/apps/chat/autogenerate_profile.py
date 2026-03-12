@@ -78,6 +78,10 @@ def generateField(field, dependencies, instructions, request=None, settings=None
         
         case 'intermediate_belief':
             return intermediateBelief(dependencies, instructions, request.user.id, request.user.username, settings)
+        
+        case 'impact':
+            return impact(dependencies, instructions, request.user.id, request.user.username, settings)
+
 
         case 'trigger':
             return trigger(dependencies, instructions, request.user.id, request.user.username, settings)
@@ -136,8 +140,9 @@ def randomAge():
     return random.randint(18, 80)
 
 def randomGender():
-    return random.choice(['Male', 'Female', 'Non-binary', 'Transgender'])
-
+    genders = ['Male', 'Female', 'Non-binary', 'Transgender']
+    weights = [0.48, 0.48, 0.02, 0.02]  # Approximate BC population distribution
+    return random.choices(genders, weights=weights, k=1)[0]
 def randomEthnicity():
     return random.choice(['White / Caucasian','Black / African American','Hispanic / Latino','East Asian','South Asian','Southeast Asian',
                           'Middle Eastern','Indigenous / First Nations','Mixed / Multiracial'])
@@ -287,7 +292,6 @@ def randomChildren(age, marital_status):
         weights = [0.22, 0.35, 0.30, 0.13]
     return random.choices([0, 1, 2, 3], weights=weights, k=1)[0]
 
-
 def randomGrandchildren(age, children):
     age      = int(age)      if age      else 40
     children = int(children) if children else 0
@@ -302,7 +306,6 @@ def randomGrandchildren(age, children):
     else:
         weights = [0.18, 0.44, 0.38]
     return random.choices([0, 1, 2], weights=weights, k=1)[0]
-
 
 def randomName(gender):
     name = ''
@@ -687,7 +690,6 @@ def intermediateBelief(dependencies, instructions, user_id, user_name, settings)
     
     return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
 
-
 def randomWorthlessBeliefs():
     patient = random.choice(_PSI_PATIENTS)
     
@@ -759,6 +761,22 @@ def behavior(dependencies, instructions, user_id, user_name, settings):
                                   user_id=str(user_name))
     
     return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+
+@observe(name="impact", as_type="span")
+def impact(dependencies, instructions, user_id, user_name, settings):
+    # args = dependencies
+    # args["user_instructions"] = instructions
+    # sys = langfuse.get_prompt("profile/sys/impact", label="production")
+    # sys = sys.compile()
+    # user = langfuse.get_prompt("profile/user/impact", label="production")
+    # user = user.compile(**args)
+    
+    # langfuse.update_current_trace(metadata=args,
+    #                               user_id=str(user_name))
+    
+    # return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+    return "The patient's symptoms have led to significant impairment in social and occupational functioning."
+
 
 @observe(name="intake", as_type="span")
 def intake(dependencies, instructions, user_id, user_name, settings):
@@ -870,6 +888,20 @@ def family_tree(dependencies, instructions, user_id, user_name, settings):
     langfuse.update_current_trace(metadata=args,
                                   user_id=str(user_name))
     
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    userObj = User.objects.get(id=user_id)
+    userSettings = userObj.newSessionSettings
+    temperature = 0.2
+    model = userSettings.model
+    max_tokens = userSettings.max_tokens
+    
+    settings = {
+        "model": model,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    
     return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
 
 @observe(name="timeline", as_type="span")
@@ -883,6 +915,20 @@ def timeline(dependencies, instructions, user_id, user_name, settings):
     
     langfuse.update_current_trace(metadata=args,
                                   user_id=str(user_name))
+    
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    userObj = User.objects.get(id=user_id)
+    userSettings = userObj.newSessionSettings
+    temperature = 0.2
+    model = userSettings.model
+    max_tokens = userSettings.max_tokens
+    
+    settings = {
+        "model": model,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
     
     return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
 
