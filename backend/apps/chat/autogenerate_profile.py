@@ -122,6 +122,9 @@ def generateField(field, dependencies, instructions, request=None, settings=None
         case "vignette":
             return vignette(dependencies, instructions, request.user.id, request.user.username, settings)
         
+        case 'canonical_facts':
+            return canonical_facts(dependencies, instructions, request.user.id, request.user.username, settings)
+
         case 'session_history':
             if instructions.strip() != "":
                 return session_history(dependencies, instructions, request.user.id, request.user.username, settings)
@@ -298,7 +301,7 @@ def randomGrandchildren(age, children):
     if age < 45 or children == 0:
         return 0
     if age < 55:
-        weights = [0.88, 0.10, 0.02]
+        weights = [0.92, 0.07, 0.01]
     elif age < 65:
         weights = [0.55, 0.32, 0.13]
     elif age < 75:
@@ -764,18 +767,17 @@ def behavior(dependencies, instructions, user_id, user_name, settings):
 
 @observe(name="impact", as_type="span")
 def impact(dependencies, instructions, user_id, user_name, settings):
-    # args = dependencies
-    # args["user_instructions"] = instructions
-    # sys = langfuse.get_prompt("profile/sys/impact", label="production")
-    # sys = sys.compile()
-    # user = langfuse.get_prompt("profile/user/impact", label="production")
-    # user = user.compile(**args)
+    args = dependencies
+    args["user_instructions"] = instructions
+    sys = langfuse.get_prompt("profile/sys/impact", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("profile/user/impact", label="production")
+    user = user.compile(**args)
     
-    # langfuse.update_current_trace(metadata=args,
-    #                               user_id=str(user_name))
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
     
-    # return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
-    return "The patient's symptoms have led to significant impairment in social and occupational functioning."
+    return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
 
 
 @observe(name="intake", as_type="span")
@@ -988,25 +990,38 @@ def profile_summary(dependencies, instructions, user_id, user_name, settings):
 @observe(name="canonical_facts", as_type="span")
 def canonical_facts(dependencies, instructions, user_id, user_name, settings):
     
-    print(settings)
-    
-    args = {
-        "vignette": settings,
-    }
-    
-    sys = langfuse.get_prompt("profile/sys/canonical_facts", label="production")
+    args = dependencies
+    sys = langfuse.get_prompt("profile/sys/canonical_facts_1", label="production")
     sys = sys.compile()
-    user = langfuse.get_prompt("profile/user/canonical_facts", label="production")
+    user = langfuse.get_prompt("profile/user/canonical_facts_1", label="production")
     user = user.compile(**args)
     
     langfuse.update_current_trace(metadata=args,
                                   user_id=str(user_name))
     
-    summary_settings = {
-        "model": "qwen3:32b",  # Use a more powerful model for the summary step
-        "temperature": 0.3,     # Lower temperature for more coherent summaries
-        "max_tokens": 1000,    # Allow for longer summaries
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    userObj = User.objects.get(id=user_id)
+    userSettings = userObj.newSessionSettings
+    temperature = 0.8
+    model = userSettings.model
+    max_tokens = userSettings.max_tokens
+    
+    settings = {
+        "model": "qwen3.5:35b",
+        "temperature": temperature,
+        "max_tokens": max_tokens,
     }
     
-    # return LLM.call("autogenerate", sys=sys, user=user, settings=summary_settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
-    return "Canonical Facts not available at this moment. Generate response without this field."
+    first = LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+    
+    args["canonical_facts_initial"] = first
+    settings["temperature"] = 0.2  # Lower temperature for more deterministic output
+    sys = langfuse.get_prompt("profile/sys/canonical_facts_2", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("profile/user/canonical_facts_2", label="production")
+    user = user.compile(**args)
+    
+    second = LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+    
+    return second

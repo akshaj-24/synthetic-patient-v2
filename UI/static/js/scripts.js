@@ -61,7 +61,8 @@ async function generateField(fieldId, dependencies) {
     let firstMissing = null;
     for (const dep of dependencies) {
         const depEl = document.getElementById(dep);
-        if (!depEl || !depEl.value.trim()) {
+        if (!depEl) continue;  // Skip if dependency field doesn't exist
+        if (!depEl.value.trim()) {
             depEl.classList.add('is-invalid-dep');
             if (!firstMissing) firstMissing = depEl;
         } else {
