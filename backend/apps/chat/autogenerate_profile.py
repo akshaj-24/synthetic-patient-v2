@@ -984,3 +984,29 @@ def profile_summary(dependencies, instructions, user_id, user_name, settings):
     }
     
     return LLM.call("autogenerate", sys=sys, user=user, settings=summary_settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+
+@observe(name="canonical_facts", as_type="span")
+def canonical_facts(dependencies, instructions, user_id, user_name, settings):
+    
+    print(settings)
+    
+    args = {
+        "vignette": settings,
+    }
+    
+    sys = langfuse.get_prompt("profile/sys/canonical_facts", label="production")
+    sys = sys.compile()
+    user = langfuse.get_prompt("profile/user/canonical_facts", label="production")
+    user = user.compile(**args)
+    
+    langfuse.update_current_trace(metadata=args,
+                                  user_id=str(user_name))
+    
+    summary_settings = {
+        "model": "qwen3:32b",  # Use a more powerful model for the summary step
+        "temperature": 0.3,     # Lower temperature for more coherent summaries
+        "max_tokens": 1000,    # Allow for longer summaries
+    }
+    
+    # return LLM.call("autogenerate", sys=sys, user=user, settings=summary_settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
+    return "Canonical Facts not available at this moment. Generate response without this field."

@@ -31,18 +31,19 @@ const sectionFields = {
 
     ],
     background: [
-        { id: 'childhood_history',    deps: ['name', 'age', 'ethnicity', 'gender', 'children', 'grandchildren', 'marital_status', 'education', 'occupation', 'disorder', 'type', 'base_emotions', 'helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs', 'intermediate_belief', 'trigger', 'intake', 'auto_thoughts', 'coping_strategies', 'behavior', 'impact'] },
-        { id: 'education_history',    deps: ['name', 'age', 'ethnicity', 'gender', 'children', 'grandchildren', 'marital_status', 'education', 'occupation', 'disorder', 'type', 'base_emotions', 'helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs', 'intermediate_belief', 'trigger', 'intake', 'auto_thoughts', 'coping_strategies', 'behavior', 'childhood_history', 'impact'] },
-        { id: 'occupation_history',   deps: ['name', 'age', 'ethnicity', 'gender', 'children', 'grandchildren', 'marital_status', 'education', 'occupation', 'disorder', 'type', 'base_emotions', 'helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs', 'intermediate_belief', 'trigger', 'intake', 'auto_thoughts', 'coping_strategies', 'behavior', 'childhood_history', 'education_history', 'impact'] },
-        { id: 'relationship_history', deps: ['name', 'age', 'ethnicity', 'gender', 'children', 'grandchildren', 'marital_status', 'education', 'occupation', 'disorder', 'type', 'base_emotions', 'helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs', 'intermediate_belief', 'trigger', 'intake', 'auto_thoughts', 'coping_strategies', 'behavior', 'childhood_history', 'education_history', 'occupation_history', 'impact'] },
-        { id: 'medical_history',      deps: ['name', 'age', 'ethnicity', 'gender', 'children', 'grandchildren', 'marital_status', 'education', 'occupation', 'disorder', 'type', 'base_emotions', 'helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs', 'intermediate_belief', 'trigger', 'intake', 'auto_thoughts', 'coping_strategies', 'behavior', 'childhood_history', 'education_history', 'occupation_history', 'relationship_history', 'impact'] },
-        { id: 'personal_history',     deps: ['name', 'age', 'ethnicity', 'gender', 'children', 'grandchildren', 'marital_status', 'education', 'occupation', 'disorder', 'type', 'base_emotions', 'helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs', 'intermediate_belief', 'trigger', 'intake', 'auto_thoughts', 'coping_strategies', 'behavior', 'childhood_history', 'education_history', 'occupation_history', 'relationship_history', 'medical_history', 'impact'] },
-        { id: 'family_tree',          deps: ['name', 'age', 'ethnicity', 'gender', 'children', 'grandchildren', 'marital_status', 'education', 'occupation', 'disorder', 'type', 'base_emotions', 'helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs', 'intermediate_belief', 'trigger', 'intake', 'auto_thoughts', 'coping_strategies', 'behavior', 'childhood_history', 'education_history', 'occupation_history', 'relationship_history', 'medical_history', 'personal_history', 'impact'] },
-        { id: 'timeline',             deps: ['name', 'age', 'ethnicity', 'gender', 'children', 'grandchildren','marital_status', 'education', 'occupation', 'disorder', 'type', 'base_emotions', 'helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs', 'intermediate_belief', 'trigger', 'intake', 'auto_thoughts', 'coping_strategies', 'behavior', 'childhood_history', 'education_history', 'occupation_history', 'relationship_history', 'medical_history', 'personal_history', 'family_tree', 'impact'] },
-        { id: 'session_history',      deps: ['name', 'age', 'ethnicity', 'gender', 'children', 'grandchildren', 'marital_status', 'education', 'occupation', 'disorder', 'type', 'base_emotions', 'helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs', 'intermediate_belief', 'trigger', 'intake', 'auto_thoughts', 'coping_strategies', 'behavior', 'childhood_history', 'education_history', 'occupation_history', 'relationship_history', 'medical_history', 'personal_history', 'family_tree', 'timeline', 'impact'] },
+        { id: 'canonical_facts',      deps: ['age', 'gender', 'name', 'ethnicity', 'marital_status', 'children', 'grandchildren', 'education', 'occupation', 'disorder', 'type', 'base_emotions', 'helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs', 'intermediate_belief', 'trigger', 'auto_thoughts', 'coping_strategies', 'behavior', 'impact', 'intake'] },
+        { id: 'childhood_history',    deps: [] },
+        { id: 'education_history',    deps: [] },
+        { id: 'occupation_history',   deps: [] },
+        { id: 'relationship_history', deps: [] },
+        { id: 'medical_history',      deps: [] },
+        { id: 'personal_history',     deps: [] },
+        { id: 'family_tree',          deps: [] },
+        { id: 'timeline',             deps: [] },
+        { id: 'session_history',      deps: [] },
     ],
     narrative: [
-        { id: 'vignette', deps: ['name', 'age', 'ethnicity', 'gender', 'children', 'grandchildren', 'marital_status', 'education', 'occupation', 'disorder', 'type', 'base_emotions', 'helpless_beliefs', 'unlovable_beliefs', 'worthless_beliefs', 'intermediate_belief', 'trigger', 'intake', 'auto_thoughts', 'coping_strategies', 'behavior', 'childhood_history', 'education_history', 'occupation_history', 'relationship_history', 'medical_history', 'personal_history', 'family_tree', 'timeline', 'session_history'] },
+        { id: 'vignette', deps: [] },
     ],
 };
 

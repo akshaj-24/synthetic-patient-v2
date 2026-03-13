@@ -18,8 +18,26 @@ def response(interview_id, question, user_id=None):
     
     checkAndUpdateSummary(interview)
     
-    # Update patient feelings
-    patient_feelings = f"Patient feelings for turn {state.turn_count}"  # Placeholder for actual feelings logic
+    call_args = getArgs(interview, patient, state)
+    
+    sys = langfuse.get_prompt("response/sys/feelings", label="production")
+    sys = sys.compile(**call_args)
+    user = langfuse.get_prompt("response/user/feelings", label="production")
+    user = user.compile(**call_args)
+    
+    feelings_behavior_resp = LLM.call(
+        id="patient_feelings_behavior", 
+        interview=interview,
+        sys=sys,
+        user=user,
+        settings=None,
+        metadata=None,
+        metadata_fields=None,
+        tools=True,)
+    
+    state.patient_feelings = feelings_behavior_resp.feelings
+    state.patient_behavior = feelings_behavior_resp.behavior
+    state.save(update_fields=['patient_feelings', 'patient_behavior'])
     
     # Patient response workflow
     user_input = question["content"]
@@ -39,17 +57,17 @@ def response(interview_id, question, user_id=None):
 
     # TODO Refactor LLM calls
 
-    # Get feelings based on interviewers question and tone
-    # sys, user = compilePrompt("patient_feelings", all_vars)
-    # pf_resp = LLM.call(id="patient_feelings",
-    #                     interview=interview, 
-    #                     sys=sys,
-    #                     user=user,
-    #                     settings=None,
-    #                     metadata=None,
-    #                     metadata_fields=None,
-    #                     tools=True,
-    #                 )
+    # Get feelings and immediate beheavior based on interviewers question and tone
+    sys, user = compilePrompt("patient_feelings_behavior", all_vars)
+    pf_resp = LLM.call(id="patient_feelings_behavior",
+                        interview=interview, 
+                        sys=sys,
+                        user=user,
+                        settings=None,
+                        metadata=None,
+                        metadata_fields=None,
+                        tools=True,
+                    )
     
     # state.patient_feelings = pf_resp.feelings
     # state.save(update_fields=['patient_feelings'])
@@ -264,3 +282,60 @@ def updateMetadata(user_id, interview_id, all_vars):
     )
     
     return 1
+
+def getArgs(interview, patient, state):
+    return {
+        # Patient fields
+        "patient_name": patient.name,
+        "patient_age": patient.age,
+        "patient_gender": patient.gender,
+        "patient_ethnicity": patient.ethnicity,
+        "patient_education": patient.education,
+        "patient_occupation": patient.occupation,
+        "patient_disorder": patient.disorder,
+        "patient_type": patient.type,
+        "patient_marital_status": patient.marital_status,
+        "patient_children": patient.children,
+        "patient_grandchildren": patient.grandchildren,
+        "patient_canonical_facts": patient.canonical_facts,
+        "patient_childhood_history": patient.childhood_history,
+        "patient_education_history": patient.education_history,
+        "patient_occupation_history": patient.occupation_history,
+        "patient_relationship_history": patient.relationship_history,
+        "patient_medical_history": patient.medical_history,
+        "patient_personal_history": patient.personal_history,
+        "patient_session_history": patient.session_history,
+        "patient_helpless_beliefs": patient.helpless_beliefs,
+        "patient_unlovable_beliefs": patient.unlovable_beliefs,
+        "patient_worthless_beliefs": patient.worthless_beliefs,
+        "patient_intermediate_belief": patient.intermediate_belief,
+        "patient_coping_strategies": patient.coping_strategies,
+        "patient_trigger": patient.trigger,
+        "patient_auto_thoughts": patient.auto_thoughts,
+        "patient_base_emotions": patient.base_emotions,
+        "patient_behavior": patient.behavior,
+        "patient_impact": patient.impact,
+        "patient_intake": patient.intake,
+        "patient_vignette": patient.vignette,
+        "patient_family_tree": patient.family_tree,
+        "patient_timeline": patient.timeline,
+        "patient_profile_summary": patient.profile_summary,
+        "patient_psi": patient.patient_psi,
+
+        # Interview fields
+        "interview_title": interview.title,
+        "interview_createdAt": interview.createdAt,
+        "interview_updated_at": interview.updated_at,
+        "interview_is_active": interview.is_active,
+        "interview_archived": interview.archived,
+
+        # InterviewState fields
+        "state_turn_count": state.turn_count,
+        "state_summary_freq": state.summary_freq,
+        "state_summary_turn": state.summary_turn,
+        "state_summary": state.summary,
+        "state_notes": state.notes,
+        "state_patient_summary": state.patient_summary,
+        "state_patient_feelings": state.patient_feelings,
+        "state_patient_behavior": state.patient_behavior,
+    }
