@@ -18,7 +18,7 @@ class PatientGraderResponse(BaseModel):
 class PatientSummaryResponse(BaseModel):
     summary: str
 
-class InterviewerSummaryResponse(BaseModel):
+class InterviewSummaryResponse(BaseModel):
     summary: str
 
 class AutogenerateResponse(BaseModel):
@@ -33,7 +33,7 @@ SCHEMA_MAP = {
     "patient_feelings_behavior": PatientToneFeelingsBehaviorResponse,
     "patient_grader": PatientGraderResponse,
     "patient_summary": PatientSummaryResponse,
-    "interviewer_summary": InterviewerSummaryResponse,
+    "interview_summary": InterviewSummaryResponse,
     "autogenerate": AutogenerateResponse,
     "interviewer": InterviewerQuestionResponse,
 }
