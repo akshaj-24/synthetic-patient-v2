@@ -2,6 +2,14 @@ TOOL_LIST = [
     {
         "type": "function",
         "function": {
+            "name": "get_canonical_facts",
+            "description": "Retrieve the patient's canonical facts including their identity, background, key life events and important people and their relationships. Use when the conversation involves establishing or confirming the patient's core information.",
+            "parameters": {"type": "object", "properties": {}, "required": []},
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "get_childhood_history",
             "description": "Retrieve the patient's childhood history including early life experiences and upbringing. Use when the conversation involves childhood, family of origin, or early trauma.",
             "parameters": {"type": "object", "properties": {}, "required": []},

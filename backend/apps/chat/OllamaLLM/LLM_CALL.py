@@ -107,8 +107,7 @@ IDS = {
     "patient_summary": "Use for summary calls",
     "patient_content": "Use for patient response content",
     "patient_tone": "Use for patient response tone",
-    "patient_behavior": "Use for patient response behavior",
-    "patient_feelings": "Use for patient feelings",
+    "patient_feelings_behavior": "Use for patient feelings and behavior",
     "patient_grader": "Use for verifying response for content and feelings",
     "autogenerate": "Use for autogenerating patient profile",
     "interviewer": "Use for interviewer autogen question",
@@ -123,7 +122,7 @@ def getSettings(id, interview_id = None, user_id = None):
     if interview_id is not None:
         interview = models.Interview.objects.get(id=interview_id)  # Assuming a function to fetch interview by ID
     
-    if id in ["patient_content", "patient_tone", "patient_behavior", "patient_grader"]:
+    if id in ["patient_content", "patient_grader"]:
         userSettings = interview.chatSettings
         temperature = userSettings.patient_temperature
         model = userSettings.patient_model
@@ -149,7 +148,7 @@ def getSettings(id, interview_id = None, user_id = None):
         temperature = OLLAMA_SETTINGS.PATIENT_SUMMARY["temperature"]
         model = interview.chatSettings.patient_model
         
-    elif id == "patient_feelings":
+    elif id == "patient_tone_feelings_behavior":
         temperature = OLLAMA_SETTINGS.FEELINGS["temperature"]
         model = interview.chatSettings.patient_model
         

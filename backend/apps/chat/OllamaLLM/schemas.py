@@ -3,24 +3,17 @@ from typing import Optional
 
 # --- Define your schemas ---
 
-# TODO: Combine tone and behavior into a single schema with subfields? Or keep separate for clarity?
-
-
 class PatientContentResponse(BaseModel):
     content: str = Field(description="The patient's spoken response")
 
-class PatientToneResponse(BaseModel):
+class PatientToneFeelingsBehaviorResponse(BaseModel):
     tone: str = Field(description="Tone of the patient response, e.g. anxious, flat, defensive")
-
-class PatientBehaviorResponse(BaseModel):
-    behavior: str = Field(description="Observed behavior cue, e.g. avoidance, eye contact")
-
-class PatientFeelingsResponse(BaseModel):
     feelings: str = Field(description="Current emotional state of the patient")
-    intensity: int = Field(description="Intensity from 1-10")
+    behavior: str = Field(description="Observed behavior cue, e.g. avoidance, eye contact, fidgeting, staring at wall")
 
 class PatientGraderResponse(BaseModel):
-    content: str = Field(description="Grader's updated content response after judging")
+    change: bool = Field(description="Whether the patient response needs to be changed based on content and feelings")
+    feedback: Optional[str] = Field(description="Specific feedback on what needs to be changed if 'change' is True")
 
 class PatientSummaryResponse(BaseModel):
     summary: str
@@ -37,9 +30,7 @@ class InterviewerQuestionResponse(BaseModel):
 
 SCHEMA_MAP = {
     "patient_content": PatientContentResponse,
-    "patient_tone": PatientToneResponse,
-    "patient_behavior": PatientBehaviorResponse,
-    "patient_feelings": PatientFeelingsResponse,
+    "patient_feelings_behavior": PatientToneFeelingsBehaviorResponse,
     "patient_grader": PatientGraderResponse,
     "patient_summary": PatientSummaryResponse,
     "interviewer_summary": InterviewerSummaryResponse,
