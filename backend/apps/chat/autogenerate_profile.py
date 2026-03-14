@@ -667,7 +667,7 @@ def randomPsiEmotions():
     return ", ".join(emotions)  
     
 def randomHelplessBeliefs():
-    patient = random.choice(_PSI_PATIENTS)
+    patient = random.choice(_PSI_PATIENTS) # From patient psi paper DATASET
     
     beliefs = patient.get("helpless_belief", [])
     print(beliefs)
@@ -678,6 +678,12 @@ def randomUnlovableBeliefs():
     
     beliefs = patient.get("unlovable_belief", [])
     return ", ".join(beliefs) if beliefs else "No unlovable beliefs in patient"
+
+def randomWorthlessBeliefs():
+    patient = random.choice(_PSI_PATIENTS)
+    
+    beliefs = patient.get("worthless_belief", [])
+    return ", ".join(beliefs) if beliefs else "No worthless beliefs in patient"
 
 @observe(name="intermediate_belief_generation", as_type="span")
 def intermediateBelief(dependencies, instructions, user_id, user_name, settings):
@@ -693,11 +699,7 @@ def intermediateBelief(dependencies, instructions, user_id, user_name, settings)
     
     return LLM.call("autogenerate", sys=sys, user=user, settings=settings, interview_id=None, user_id=user_id, metadata=None, tools=False).content
 
-def randomWorthlessBeliefs():
-    patient = random.choice(_PSI_PATIENTS)
-    
-    beliefs = patient.get("worthless_belief", [])
-    return ", ".join(beliefs) if beliefs else "No worthless beliefs in patient"
+
 
 @observe(name="trigger_generation", as_type="span")
 def trigger(dependencies, instructions, user_id, user_name, settings):
